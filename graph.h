@@ -9,7 +9,8 @@ Constructor (label)
 Constructor() //default constructor
 
 str get_label()
-array get_edges()
+array get_next_edges()
+array get_prev_edges()
 void append_prev_edges()
 void append_next_edges()
 
@@ -44,6 +45,8 @@ void create_node()
 void create_edge()
 void generate_graph(source) // reading from file and generating graph.
 print_graph()?
+
+void get_edges() //get the multimap
 
 Destructor() // default destructor or additional functionality for handling pointers?
 
