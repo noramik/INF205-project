@@ -1,4 +1,14 @@
 /*
+Random thoughts:
+    Can we make clusters for the nodes and belonging edges, to prioritze areas for search?
+    OR, what about weighting the edges. So instead of searching trough edges randomly, it is done by a prioritatzion...
+    Doing random walks trough the graph and saving different paths, using regex or similar to look for pattern matching
+
+Parallelization:
+    One channel for each start node
+    Split channels for each potential route (edge split)
+    Backwards vs. forward search
+
 
 
 find_path(graph G, path p): // p or q
@@ -55,7 +65,7 @@ find_path(graph G, path p): // p or q
 
     return array all_found_paths
 
-SEARCH_FORWARD(node, &stash, index) //function:. Index is how far along we have come in the path p/q/or our current position
+SEARCH_FORWARD(node, stash, index) //function:. Index is how far along we have come in the path p/q/or our current position
 
     if node.get_next_edges() # make sure we are not at end end/dangling node
 
@@ -70,8 +80,8 @@ SEARCH_FORWARD(node, &stash, index) //function:. Index is how far along we have 
                 1.2.1 if num_matches = path_size: Add stash to all_found_paths
                 1.2.2 else:
                 1.3 check if we are at the end of the path
-                1.3.1 if at the end; SEARCH_BACKWARDS(starting_node, &stash, starting_index) iterate from starting point. SAVE the starting_index somehwere to make it accessible here
-                1.3.2 if not; SEARCH_FORWARD(current_pattern[-1], &stash, index + len(current_pattern)
+                1.3.1 if at the end; SEARCH_BACKWARDS(starting_node, stash, starting_index) iterate from starting point. SAVE the starting_index somehwere to make it accessible here
+                1.3.2 if not; SEARCH_FORWARD(current_pattern[-1], stash, index + len(current_pattern)
                             #current_pattern[-1] the last node in the observed pattern. Where we will continue
                             #index: Move the right number of elements forward
                 else: nothing, just continue the code
@@ -84,7 +94,7 @@ SEARCH_FORWARD(node, &stash, index) //function:. Index is how far along we have 
 
 
                 if path_size > index+1 #in case we are at the end of our path
-                    SEARCH_FORWARD(head_node, &stash, index+1) //DEPTH first solution
+                    SEARCH_FORWARD(head_node, stash, index+1) //DEPTH first solution
 
                 else: # Have we successed (END), or do we need to go back to the start node and iterate backwards?
                     if num_matches == path_size: #success
@@ -111,7 +121,7 @@ SEARCH_FORWARD(node, &stash, index) //function:. Index is how far along we have 
 
 
 
-SEARCH_BACKWARDS(node, &stash, index)
+SEARCH_BACKWARDS(node, stash, index)
 
 
 
