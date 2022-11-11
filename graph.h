@@ -57,5 +57,5 @@ move_assignment()?
 
 
 private:
-multimap? edges; //Labels as keys, pointers to edge object as value
+multimap? edges; //Labels as keys, pointers to edge object as value. Maybe list of pointers as values, and then use map instead of multimap.
 nodes? // Do we need this?
