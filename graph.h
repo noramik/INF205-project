@@ -2,25 +2,28 @@
 #define GRAPH
 
 
-/*
+class Edge; // Edge class is defined here to avoid problems when we declare variables as Edge* in Node class.
+// Implementation is further down in the file.
+
 class Node
 public:
-Constructor (label)
-Constructor() //default constructor
+Constructor() {} //default constructor
+Constructor(std::string in_label) {this->label = in_label;) // Constructor
 
-str get_label()
-array get_next_edges()
-array get_prev_edges()
-void append_prev_edges()
-void append_next_edges()
+
+std::string get_label() const {return this->label;} // spørsmål: må det være const her? hvorfor?
+std::vector<Edge*> get_prev_edges() const {return this->prev_edges;} // returning edges leading to the node. vector here or array?
+std::vecotr<Edge*> get_next_edges() const {return this->next_edges;} // returning edges going from the node. vector here or array?
+void append_prev_edges(new_edge) {this->prev_edges.push_back(new_edge);}
+void append_next_edges(new_edge) {this->next_edges.push_back(new_edge);}
+
 
 
 private:
-str label = "";
-Edge* prev_edges[] = nullptr;
-Edge* next_edges[] = nullptr;
-
-
+std::string label = "";
+std::vector<Edge*> prev_edges = nullptr;
+std::vector<Edge*> next_edges = nullptr;
+/*
 class Edge
 public:
 Constructor(label, head_node, tail_head)
@@ -60,4 +63,5 @@ move_assignment()?
 
 private:
 multimap? edges; //Labels as keys, pointers to edge object as value. Maybe list of pointers as values, and then use map instead of multimap.
-nodes? // Do we need this?
+nodes? // Do we need this
+*/
