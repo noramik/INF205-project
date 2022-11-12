@@ -13,7 +13,7 @@ Constructor(std::string in_label) {this->label = in_label;) // Constructor
 
 std::string get_label() const {return this->label;} // spørsmål: må det være const her? hvorfor?
 std::vector<Edge*> get_prev_edges() const {return this->prev_edges;} // returning edges leading to the node. vector here or array?
-std::vecotr<Edge*> get_next_edges() const {return this->next_edges;} // returning edges going from the node. vector here or array?
+std::vector<Edge*> get_next_edges() const {return this->next_edges;} // returning edges going from the node. vector here or array?
 void append_prev_edges(new_edge) {this->prev_edges.push_back(new_edge);}
 void append_next_edges(new_edge) {this->next_edges.push_back(new_edge);}
 
@@ -27,7 +27,7 @@ std::vector<Edge*> next_edges = nullptr;
 class Edge
 public
 Constructor() {} //default constructor
-Constructor(std:: string label, Node* head_node, Node* tail_node) {} // Implementation in cpp file?
+Constructor(std:: string label, Node* head_node, Node* tail_node) // Implementation in cpp file?
 
 
 std::string get_label() const {return this->label;}
