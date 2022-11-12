@@ -12,8 +12,8 @@ Constructor(std::string in_label) {this->label = in_label;) // Constructor
 
 
 std::string get_label() const {return this->label;} // spørsmål: må det være const her? hvorfor?
-std::vector<Edge*> get_prev_edges() const {return this->prev_edges;} // returning edges leading to the node. vector here or array?
-std::vector<Edge*> get_next_edges() const {return this->next_edges;} // returning edges going from the node. vector here or array?
+std::vector<Edge*> get_prev_edges() const {return this->prev_edges;} // returning edges leading to the node. Can this even be const as prev_edges might change
+std::vector<Edge*> get_next_edges() const {return this->next_edges;} // returning edges going from the node. Can this even be const as next_edges might change
 void append_prev_edges(new_edge) {this->prev_edges.push_back(new_edge);}
 void append_next_edges(new_edge) {this->next_edges.push_back(new_edge);}
 
@@ -21,8 +21,9 @@ void append_next_edges(new_edge) {this->next_edges.push_back(new_edge);}
 
 private:
 std::string label = "";
-std::vector<Edge*> prev_edges = nullptr;
-std::vector<Edge*> next_edges = nullptr;
+std::vector<Edge*> prev_edges = std::vector<Edge*>(); // this is how it's done in undir-inclist-graph.h instead of nullptr
+// Is this the way it needs to be done? What does it do? Creates an empty vector? uses edge default constructor?
+std::vector<Edge*> next_edges = std::vector<Edge*>();
 
 class Edge
 public
