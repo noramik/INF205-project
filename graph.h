@@ -14,8 +14,8 @@ namespace graph
 	class Node
 	{
 	public:
-	Constructor() {} //default constructor
-	Constructor(std::string in_label) {this->label = in_label;) // Constructor
+	Node() {} //default constructor
+	Node(std::string in_label) {this->label = in_label;} // Constructor
 
 
 	std::string get_label() const {return this->label;} // spørsmål: må det være const her? hvorfor?
@@ -35,12 +35,16 @@ namespace graph
 
 	class Edge
 	{
-	public
-	Constructor() {} //default constructor
-	Constructor(std:: string label, Node* head_node, Node* tail_node) // Implementation in cpp file?
+	public:
+	Edge() {} //default constructor
+	Edge(std:: string in_label, Node* head_node, Node* tail_node) {
+		this->label=in_label;
+		this->set_head_node(head_node);
+		this->set_tail_node(tail_node);
+	}
 
 
-	std::string get_label() const {return this->label;}
+	std::string get_label() const {return this->label;};
 	Node* get_head_node() const {return this->head_node;}
 	Node* get_tail_node() const {return this->tail_node;}
 	void set_head_node(new_node) {this->head_node = new_node;}
