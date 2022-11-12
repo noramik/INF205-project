@@ -23,15 +23,18 @@ private:
 std::string label = "";
 std::vector<Edge*> prev_edges = nullptr;
 std::vector<Edge*> next_edges = nullptr;
-/*
-class Edge
-public:
-Constructor(label, head_node, tail_head)
-Constructor() //default constructor
 
-str get_label()
-str get_nodes(head_or_tail)
-void set_node(head_or_tail)
+class Edge
+public
+Constructor() {} //default constructor
+Constructor(std:: string label, Node* head_node, Node* tail_node) {} // Implementation in cpp file?
+
+
+std::string get_label() const {return this->label;}
+Node* get_head_node() const {return this->head_node;}
+Node* get_tail_node() const {return this->tail_node;}
+void set_head_node(new_node) {this->head_node = new_node;}
+void set_tail_node(new_node) {this->tail_node = new_node;}
 
 
 private:
@@ -39,7 +42,7 @@ str label = ";
 Node* head_node = nullptr; //probably, need default value
 Node* tail_node = nullptr;
 
-
+/*
 class Graph
 
 public:
