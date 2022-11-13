@@ -49,7 +49,8 @@ print_graph()?
 multimap get_edges() //get the multimap
 Node* get_node_pointer_by_unique_label() (?)
 
-find_pattern(path p, path q, return_nodes=False);  #False betyr True/False answer. True betyr finn alle noder og returner med label.
+type T find_pattern(path p, path q, return_nodes=False);  #False betyr True/False answer. True betyr finn alle noder og returner med label.
+# FInn ut av hvordan returnere to ulike ting
 
 Destructor() // default destructor or additional functionality for handling pointers?
 
