@@ -2,6 +2,7 @@
 #include <array>
 
 //Helper method, only used by this file?
+// Alternatively. Have in a separate file potentially with namespace graph or smoething else like analyze
 namespace {
 
 std::tuple<char, *std::vector<Edge*>> analyse_graph(const path &p, const path &q) {
@@ -25,78 +26,116 @@ std::tuple<char, *std::vector<Edge*>> analyse_graph(const path &p, const path &q
             // Add number of instances to the mapping
             counted_instances[edge_label] = num_instances;
         }
+    }
 
 
 
     // Special case for starting and ending points. We do not allow this procedure if the starting/ending edge labels of p and q are equal
-    //Idea. user a function called compare_edges()?
-    // start
-    if (counted_instances[p[0]] != counted_instances[q[0]]) {
+    //
+    const int p_0 = counted_instances[p[0]];
+    const int p_n = counted_instances[p.back()];
+    const int q_0 = counted_instances[q[0]];
+    const int q_m = counted_instances[q.back()];
 
-        //int higher = std::max(counted_instances[p.back()], counted_instances[p[0]]) //changing the order, incase
+    if (p[0] != q[0] && p.back() != q.back()) {
+        //choose start or end based on fewest appearances. Priorotize beginning (lower or equal to)
+        const int minima = std::min({p_0, p_n, q_0, q_m});
 
-        // We find nodes connected to both p_0 and q_0 if the edge with the fewest appearances is lower than a mathematical requirement
-        int requirement = floor (this->tot_num_edges/3) //Must choose this math carefully. Dummy value now
-
-        if (counted_instances[p[0]] <= counted_instances[q[0]] && counted_instances[p[0]] < requirement) {
-            //.... check for matching nodes
-            std::vector<Edge*> *starting_points = new std::vector<Edge*>(); //HEAP
-
-            for (/* edge_pointer in this->edges[p[0]]*/) {
-                Node* node = edge_pointer.get_tail_node();
-                std::vector<Edge*> potential_edges = node.get_next_edges();
-
-                std::vector<int>::iterator it;
-                it = std::find(potential_edges.begin(), potential_edges.end(), q[0]);
-                if (it != potential_edges.end()) {// if found
-                        starting_points->push_back(edge_pointer);
-                }
-
-            }
-            char sequence_letter = /* find which sequence is the largest*/;
-            return std::tuple<sequence_letter, starting_points>;
-
+        if (minima == p_0 || minima == q_0) {
+            std::tuple<char, *std::vector<Edge*>> start = analyse_path_edges(p[0], q[0]);
         }
-        else if (counted_instances[q[0]) < requirement) {
-            //...check for matching nodes
-            std::vector<Edge*> *starting_points = new std::vector<Edge*>();
+        else std::tuple<char, *std::vector<Edge*>> start = analyse_path_edges(p.back(), q.back());
 
-            for (/* edge_pointer in this->edges[q[0]]*/) {
-                Node* node = edge_pointer.get_tail_node();
-                std::vector<Edge*> potential_edges = node.get_next_edges();
-
-                std::vector<int>::iterator it;
-                it = std::find(potential_edges.begin(), potential_edges.end(), p[0]);
-                if (it != potential_edges.end()) {// if found
-                        starting_points->push_back(edge_pointer);
-                }
-
-            }
-            char sequence_letter = /* find which sequence is the largest*/;
-            return std::tuple<sequence_letter, starting_points>;
-
-        }
-        else {
-            char sequence_letter = ""; //empty
-            std::vector<Edge*> *starting_points = nullptr;
-
-            return std::tuple<"", starting_points>;
-
+        // if start[1] != nullptr: return it. Make sure pointers is handled correctly
     }
 
+    else if (p[0] != q[0]) {
+            std::tuple<char, *std::vector<Edge*>> start = analyse_path_edges(p[0], q[0]);
+            // if start[1] != nullptr: return it. Make sure pointers is handled correctly
+    }
+    else if (p.back() != q.back()) {
+        std::tuple<char, *std::vector<Edge*>> start = analyse_path_edges(p.back(), q.back());
+        // if start[1] != nullptr: return it. Make sure pointers is handled correctly
     }
 
-}
 
-bool chcek_requirement
-T analyse_path_edges(string p_label, string q_label) {
-
-
-}
-
+    // -----General case: lowest count and longest sequence
+    //find the edge with the lowest count
+    //try to find it in the longest sequence: starting points
+    // else, from the shortest sequence
 }
 
 
+
+std::tuple<char, *std::vector<Edge*>> analyse_path_edges(string p_label, string q_label, const bool start) {
+    /// We find nodes connected to both p_label and q_label if the edge with the fewest appearances is lower than a mathematical requirement
+    /// p_label and q_label are both either the first or last edges in sequence p and q.
+    /// place == True if at the end of the sequence, False if at the end
+
+    int requirement = floor (this->tot_num_edges/3) ///Must choose this math carefully. Dummy value now
+
+    if (counted_instances[p_label] <= counted_instances[q_label] && counted_instances[p_label] < requirement) {
+        //.... check for matching nodes
+        std::vector<Edge*> *starting_points = new std::vector<Edge*>(); //HEAP
+
+        for (/* edge_pointer in this->edges[p_label]*/) {
+
+            if start {//if True
+                Node* node = edge_pointer.get_tail_node();
+                std::vector<Edge*> potential_edges = node.get_next_edges();
+            }
+            else { //if at the end
+                Node* node = edge_pointer.get_head_node();
+                std::vector<Edge*> potential_edges = node.get_prev_edges();
+            }
+
+            std::vector<int>::iterator it;
+            it = std::find(potential_edges.begin(), potential_edges.end(), q_label);
+            if (it != potential_edges.end()) {// if found
+                    starting_points->push_back(edge_pointer);
+            }
+
+        }
+        char sequence_letter = /*p or q: find which sequence is the largest*/;
+        return std::tuple<sequence_letter, starting_points>;
+    }
+    else if (counted_instances[q_label]) < requirement) {
+        //...check for matching nodes DUPLICATE (create another function?)
+        std::vector<Edge*> *starting_points = new std::vector<Edge*>();
+
+        for (/* edge_pointer in this->edges[q_label]*/) {
+            if start {//if True
+                Node* node = edge_pointer.get_tail_node();
+                std::vector<Edge*> potential_edges = node.get_next_edges();
+            }
+            else { //if at the end
+                Node* node = edge_pointer.get_head_node();
+                std::vector<Edge*> potential_edges = node.get_prev_edges();
+            }
+
+            std::vector<int>::iterator it;
+            it = std::find(potential_edges.begin(), potential_edges.end(), p[0]);
+            if (it != potential_edges.end()) {// if found
+                    starting_points->push_back(edge_pointer);
+            }
+
+        }
+        char sequence_letter = /* find which sequence is the largest*/;
+        return std::tuple<sequence_letter, starting_points>;
+        // DUPLICATE END
+    }
+    else {
+        char sequence_letter = ""; //empty
+        std::vector<Edge*> *starting_points = nullptr;
+
+        return std::tuple<"", starting_points>;
+    }
+}
+
+}
+
+
+namespace graph{
 
 type T find_pattern(const path p, const path q, bool return_nodes=False) {
 
@@ -156,5 +195,5 @@ iterate_forward(node, stash);
 
 
 */
-
+}
 
