@@ -1,69 +1,7 @@
 #ifndef GRAPH
 #define GRAPH
 
-<<<<<<< HEAD
 
-/*
-class Node
-public:
-Constructor (label)
-Constructor() //default constructor
-
-str get_label()
-array get_next_edges()
-array get_prev_edges()
-void append_prev_edges()
-void append_next_edges()
-
-
-private:
-str label = "";
-Edge* prev_edges[] = nullptr;
-Edge* next_edges[] = nullptr;
-
-
-class Edge
-public:
-Constructor(label, head_node, tail_head)
-Constructor() //default constructor
-
-str get_label()
-str get_nodes(head_or_tail)
-void set_node(head_or_tail)
-
-
-private:
-str label = ";
-Node* head_node = nullptr; //probably, need default value
-Node* tail_node = nullptr;
-
-
-class Graph
-
-public:
-Constructor()
-void create_node()
-void create_edge()
-void generate_graph(source) // reading from file and generating graph.
-print_graph()?
-
-multimap get_edges() //get the multimap
-Node* get_node_pointer_by_unique_label() (?)
-
-type T find_pattern(path p, path q, return_nodes=False);  #False betyr True/False answer. True betyr finn alle noder og returner med label.
-# FInn ut av hvordan returnere to ulike ting
-
-Destructor() // default destructor or additional functionality for handling pointers?
-
-Copy constructor and assignement or forbid copying.
-Move_constructor()?
-move_assignment()?
-
-
-private:
-multimap? edges; //Labels as keys, pointers to edge object as value. Maybe list of pointers as values, and then use map instead of multimap.
-nodes? // Do we need this?
-=======
 #include <string>
 #include <vector>
 #include <iostream>
@@ -146,4 +84,4 @@ namespace graph
 	nodes? // Do we need this
 */
 }
->>>>>>> 1c1dab84204acbcc4c9bad5f29926a503e32a7c2
+
