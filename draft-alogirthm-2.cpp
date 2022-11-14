@@ -71,7 +71,8 @@ std::tuple<char, *std::vector<Edge*>> analyse_graph(const path &p, const path &q
             minima = counted_instances[idx].second;
         }
     }
-    std::vector<Edge*> starting_points = this->edges[min_label]
+    std::vector<Edge*, 1> *starting_point = new std::vector<Edge*>();  //HEAP
+    starting_points = this->edges[min_label] //can we add all at once, or do we have to iterate and add one at a time?
 
     // Find the longest sequence that holds the min_label
     std::vector<int>::iterator it;
@@ -159,6 +160,13 @@ std::tuple<char, *std::vector<Edge*>> analyse_path_edges(string p_label, string 
     }
 }
 
+
+
+void iterate_forward(Node* node, std::deque<string> stash) { //COPY stash
+    //...iterate forward
+
+}
+
 }
 
 
@@ -168,11 +176,7 @@ type T find_pattern(const path p, const path q, bool return_nodes=False) {
 
 
     //STEP 1: ANALYSE ----------------
-    auto [sequence, starting_points] = analyse_graph(const path &p, const path &q);
-    if !starting_points; //Somehow check if starting points is empty:
-        return /*No patterns found*/;
-
-/*
+    /*
     1.1 Count instances
         1.1.1 Find unique edges in p and q
         1.1.2 (gå inn i edge_mappingen of hent ut lengden av listene)
@@ -182,13 +186,39 @@ type T find_pattern(const path p, const path q, bool return_nodes=False) {
 
         1.2.1 if any instances == 1: Velg dette som startpunkt
         1.2.2 elif (p_1, p_n, q_1, q_m) < Et eller annet: Sjekk felles noder, bruk dette som startpunkt (evt. stopp hele koden)
-        1.2.3 else velg laveste antall av forekomst i den lengste pathen
+        1.2.3 else velg laveste antall av forekomst i den lengste pathen */
+
+    auto [sequence, starting_points] = analyse_graph(const path &p, const path &q);
+    if !starting_points; //Somehow check if starting points is empty:
+        return /*No patterns found*/;
 
 
+
+/*
     STEP 2. Deleger startpunkter til ranks (parallellisering) --------------
 
-    STEP 3. Start søk ------------------
 
+    */
+    delete[] starting_points //IMPORTANT!!!
+    /*
+
+    STEP 3. Start søk ------------------
+    */
+
+    std::deque<string> STASH; //current path. Will continously be made several copies. DEQUE or OWN simple IMPLEMENTATION?
+    std::vector<string> found_paths; //all initially found paths of p or q (whomever we might start with) will be stored here for each rank
+    const Node* start_node;
+    const int start_path_index;
+    int current_index;
+
+    for (Edge* edge : starting_points) {
+        STASH.push_back(edge.tail_node)
+        STASH.push_back(edge.head_node)
+
+        iterate_forward(edge.head_node, STASH)
+    }
+
+    /*
     stash = []; // skal lagre current path av noder her
     all_paths_found = [];
     const start_node;
