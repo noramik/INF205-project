@@ -60,17 +60,44 @@ std::tuple<char, *std::vector<Edge*>> analyse_graph(const path &p, const path &q
 
 
     // -----General case: lowest count and longest sequence
-    //find the edge with the lowest count
-    //try to find it in the longest sequence: starting points
-    // else, from the shortest sequence
+
+    /// Something called VALUE_COMP() in stl.library. Use that instead
+    string min_label = counted_instances[0].first
+    int minima = counted_instances[0].second
+
+    for (int idx=1; idx< counted_instances.size(); idx++) {
+        if (counted_instances[idx].second < minima) {
+            min_label = counted_instances[idx].first;
+            minima = counted_instances[idx].second;
+        }
+    }
+    std::vector<Edge*> starting_points = this->edges[min_label]
+
+    // Find the longest sequence that holds the min_label
+    std::vector<int>::iterator it;
+    if (p.size() > q.size()) {
+        it = std::find(p.begin(), p.end(), min_label);
+        if (it != p.end()) char sequence_letter = "p"; /* if found */
+        else char sequence_letter = "q";
+    }
+    else {
+        it = std::find(q.begin(), q.end(), min_label);
+        if (it != p.end()) char sequence_letter = "q"; /* if found */
+        else char sequence_letter = "p";
+    }
+    return std::tuple<sequence_letter, starting_points>;
+
 }
+
+
+
 
 
 
 std::tuple<char, *std::vector<Edge*>> analyse_path_edges(string p_label, string q_label, const bool start) {
     /// We find nodes connected to both p_label and q_label if the edge with the fewest appearances is lower than a mathematical requirement
     /// p_label and q_label are both either the first or last edges in sequence p and q.
-    /// place == True if at the end of the sequence, False if at the end
+    /// place == True if at the beginning of the sequence, False if at the end
 
     int requirement = floor (this->tot_num_edges/3) ///Must choose this math carefully. Dummy value now
 
@@ -124,7 +151,7 @@ std::tuple<char, *std::vector<Edge*>> analyse_path_edges(string p_label, string 
         return std::tuple<sequence_letter, starting_points>;
         // DUPLICATE END
     }
-    else {
+    else { // we don't want to do anything, but need to return for consistency?
         char sequence_letter = ""; //empty
         std::vector<Edge*> *starting_points = nullptr;
 
