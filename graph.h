@@ -88,6 +88,7 @@ namespace graph
 
 
 	private:
+	// Should we use Edge* and Node* in the maps? I notice in the undir-inclist-graph.h, pointers aren't used, instead the Node object itself is used.
 	std::unordered_map<std::string, std::vector<Edge*> > edges; //Labels as keys, pointers to edge object as value. Maybe list of pointers as values, and then use map instead of multimap.
 	// Used unordered_map instead of map. Usually faster, i think for our use-case, an ordered map wouldn't be neccessary either way.
 	std::map<std::string, Node*> nodes; // What data stucture here? Map? Set? vector?
