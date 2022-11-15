@@ -162,8 +162,44 @@ std::tuple<char, *std::vector<Edge*>> analyse_path_edges(string p_label, string 
 
 
 
-void iterate_forward(Node* node, std::deque<string> stash) { //COPY stash
+void iterate_forward(Node* node, const path &path, std::deque<string> stash, int current_index, std::vector<std::vector<Node*>> &found_paths) { //COPY stash and index
     //...iterate forward
+
+    for (Edge* edge: node.next_edges()) {
+            //reset stash... problems
+
+        if (edge.get_label() == path[current_index]) { //a match is found
+            stash.push_back(node);
+            current_index ++;
+
+            if (stash.size() == path.size()) { //a whole path is found!
+                found_paths.push_back(stash)
+            }
+
+            else if // at the end
+
+            else //iterate_forward recursive
+        }
+
+
+
+    }
+    /*for edge in node.next_edges():
+
+        if edge == match:
+            current_index ++;
+            stash.append(edge.head_node())
+
+            if hele path funnet:
+                all_paths_found.push_back(stash)
+
+            if current_index == len(p)-1:
+                iterate_backwards(start_node, stash)
+
+
+
+            iterate_forward(edge.head_node, stash)*/
+
 
 }
 
@@ -188,7 +224,7 @@ type T find_pattern(const path p, const path q, bool return_nodes=False) {
         1.2.2 elif (p_1, p_n, q_1, q_m) < Et eller annet: Sjekk felles noder, bruk dette som startpunkt (evt. stopp hele koden)
         1.2.3 else velg laveste antall av forekomst i den lengste pathen */
 
-    auto [sequence, starting_points] = analyse_graph(const path &p, const path &q);
+    auto [path_letter, starting_points] = analyse_graph(const path &p, const path &q);
     if !starting_points; //Somehow check if starting points is empty:
         return /*No patterns found*/;
 
@@ -206,7 +242,7 @@ type T find_pattern(const path p, const path q, bool return_nodes=False) {
     */
 
     std::deque<string> STASH; //current path. Will continously be made several copies. DEQUE or OWN simple IMPLEMENTATION?
-    std::vector<string> found_paths; //all initially found paths of p or q (whomever we might start with) will be stored here for each rank
+    std::vector<std::vector<Node*>> found_paths; //all initially found paths of p or q (whomever we might start with) will be stored here for each rank
     const Node* start_node;
     const int start_path_index;
     int current_index;
@@ -215,22 +251,10 @@ type T find_pattern(const path p, const path q, bool return_nodes=False) {
         STASH.push_back(edge.tail_node)
         STASH.push_back(edge.head_node)
 
-        iterate_forward(edge.head_node, STASH)
+        iterate_forward(edge.head_node, path path_letter, STASH, current_index, &found_paths); //path_letter = p or q
     }
 
-    /*
-    stash = []; // skal lagre current path av noder her
-    all_paths_found = [];
-    const start_node;
-    current_index;
-
-    for edge in start_edges:
-        stash.append(edge.tail_node og edge.head_node)
-
-        iterate_forward(head_node, stash);
-
-}
-
+/*
 iterate_forward(node, stash);
 
     for edge in node.next_edges():
