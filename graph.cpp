@@ -51,6 +51,14 @@ namespace graph
 			   std::vector<Edge*> edge_vector = iter.second;
 			   for (auto x=edge_vector.begin(); x != edge_vector.end(); x++) delete *x; // Not sure if this works or not, but at least no error messages.
 		   }
+
+		   // Deleting Node* on the heap
+		   // Do I need to delete the key as well? that shouldn't be on the heap though? It's just std::string
+		   for (auto iter : this->nodes)
+		   		   {
+		   			   Node* node = iter.second;
+		   			   delete node; // Not sure if this works or not, but at least no error messages.
+		   		   }
 	}
 
 
