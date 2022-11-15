@@ -6,7 +6,7 @@
 #include <vector>
 #include <iostream>
 #include <unordered_map>
-#include <set>
+#include <map>
 
 namespace graph
 {
@@ -64,11 +64,11 @@ namespace graph
 	public:
 	Graph() {}; // Constructor, to be implemented
 	void create_node(std::string in_label){
-	 Node* new_node = new Node(in_label);
-	 this->nodes.push_back(new_node);
+		Node* new_node = new Node(in_label);
+		this->nodes.insert({in_label, new_node});
 	};
 	void create_edge(std::string in_label);
-	std::vector<Node*> get_nodes() const {return this->nodes;}
+	std::map<std::string, Node*> get_nodes() const {return this->nodes;}
 	/*
 	void generate_graph(source) // reading from file and generating graph.
 	print_graph()?
@@ -89,7 +89,7 @@ namespace graph
 	private:
 	std::unordered_map<std::string, std::vector<Edge*> > edges; //Labels as keys, pointers to edge object as value. Maybe list of pointers as values, and then use map instead of multimap.
 	// Used unordered_map instead of map. Usually faster, i think for our use-case, an ordered map wouldn't be neccessary either way.
-	std::vector<Node*> nodes; // What data stucture here? Map? Set? vector?
+	std::map<std::string, Node*> nodes; // What data stucture here? Map? Set? vector?
 	};
 
 }
