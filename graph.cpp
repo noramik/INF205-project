@@ -44,6 +44,13 @@ namespace graph
 
 		   // deallocate all the edges
 		   //for(auto iter = this->edges.begin(); iter != this->edges.end(); iter++) delete *iter;
+
+		   // Access the vector of Edge*, then iterate through each Edge* element in that vector and deallocate.
+		   for (auto iter : this->edges)
+		   {
+			   std::vector<Edge*> edge_vector = iter.second;
+			   for (auto x=edge_vector.begin(); x != edge_vector.end(); x++) delete *x; // Not sure if this works or not, but at least no error messages.
+		   }
 	}
 
 
