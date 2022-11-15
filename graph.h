@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include <map>
+#include <unordered_map>
 
 namespace graph
 {
@@ -57,13 +57,14 @@ namespace graph
 	Node* head_node = nullptr; //probably, need default value
 	Node* tail_node = nullptr;
 	};
-	/*
+
 	class Graph
 
 	public:
-	Constructor()
-	void create_node()
-	void create_edge()
+	Graph() {}; // Constructor, to be implemented
+	void create_node();
+	void create_edge();
+	/*
 	void generate_graph(source) // reading from file and generating graph.
 	print_graph()?
 
@@ -71,16 +72,18 @@ namespace graph
 	Node* get_node_pointer_by_unique_label() (?)
 
 	find_pattern(path p, path q, return_nodes=False);  #False betyr True/False answer. True betyr finn alle noder og returner med label.
-
-	Destructor() // default destructor or additional functionality for handling pointers?
-
+	*/
+	~Destructor();// default destructor or additional functionality for handling pointers?
+	/*
 	Copy constructor and assignement or forbid copying.
 	Move_constructor()?
 	move_assignment()?
+	*/
 
 
 	private:
-	multimap? edges; //Labels as keys, pointers to edge object as value. Maybe list of pointers as values, and then use map instead of multimap.
+	std::unordered_map<std::string, std::vector<Edge*>> edges; //Labels as keys, pointers to edge object as value. Maybe list of pointers as values, and then use map instead of multimap.
+	// Used unordered_map instead of map. Usually faster, i think for our use-case, an ordered map wouldn't be neccessary either way.
 	nodes? // Do we need this
 */
 }
