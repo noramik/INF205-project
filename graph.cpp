@@ -35,5 +35,16 @@ namespace graph
 
 	}
 
+	// Destructor
+	Graph::~Graph()
+	{
+		// This I basically just took from undir-inclist-graph.cpp
+		 // debug output
+		   std::clog << "\tlog output: calling UndirInclistGraph destructor\n\t\t(this == " << this << ")\n";
+
+		   // deallocate all the edges
+		   //for(auto iter = this->edges.begin(); iter != this->edges.end(); iter++) delete *iter;
+	}
+
 
 }
