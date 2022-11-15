@@ -87,7 +87,7 @@ namespace graph
 
 
 	private:
-	std::unordered_map<std::string, std::vector<Edge*>> edges; //Labels as keys, pointers to edge object as value. Maybe list of pointers as values, and then use map instead of multimap.
+	std::unordered_map<std::string, std::vector<Edge*> > edges; //Labels as keys, pointers to edge object as value. Maybe list of pointers as values, and then use map instead of multimap.
 	// Used unordered_map instead of map. Usually faster, i think for our use-case, an ordered map wouldn't be neccessary either way.
 	std::vector<Node*> nodes; // What data stucture here? Map? Set? vector?
 	};
