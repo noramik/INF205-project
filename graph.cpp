@@ -1,5 +1,6 @@
 #include <vector>
 #include <unordered_map>
+#include <string>
 
 #include "graph.h"
 namespace graph
@@ -14,23 +15,25 @@ namespace graph
 
 	}
 
-
-	void create_edge(std::string in_label)
+	 */
+	void Graph::create_edge(std::string in_label, std::string head_node_name, std::string tail_node_name) //We need head_node and tail_node here right? Or else we have an edge
+	// that doesn't connect anything.
 	{
-		Node new_edge = Edge(in_label);
+		Node* head_node = new Node(head_node_name);
+		Node* tail_node = new Node(tail_node_name);
+		Edge* new_edge = new Edge(in_label, head_node, tail_node); // is this pointer handled safely? When does it get deallocated? With the graph object?
 		if (this->edges.find(in_label) == this->edges.end()) // Checks whether the label is in the map
 		{
 			std::vector<Edge*> e; // intializes vector of Edge*
-			e.push_back(&new_edge); //Adds new_edge to vector
-			this->edges.insert(in_label, e);
+			e.push_back(new_edge); //Adds new_edge to vector
+			this->edges.insert({in_label, e});
 		}
 		else
 		{
-			this->edges.at(in_label).push_back(&new_edge);
+			this->edges.at(in_label).push_back(new_edge);
 		}
 
 	}
-	*/
 
 
 }

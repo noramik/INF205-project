@@ -67,8 +67,9 @@ namespace graph
 		Node* new_node = new Node(in_label);
 		this->nodes.insert({in_label, new_node});
 	};
-	void create_edge(std::string in_label);
+	void create_edge(std::string in_label, std::string head_node_name, std::string tail_node_name);
 	std::map<std::string, Node*> get_nodes() const {return this->nodes;}
+	std::unordered_map<std::string, std::vector<Edge*> > get_edges() const {return this->edges;}
 	/*
 	void generate_graph(source) // reading from file and generating graph.
 	print_graph()?
