@@ -14,7 +14,7 @@ int main()
 	std::map<std::string, graph::Node*> nodes = g->get_nodes();
 	for (const auto& x: nodes)
 	{
-	//std::cout << x.first << "\t" << x.second << std::endl;
+		std::cout << x.first << "\t" << x.second->get_label() << std::endl;
 	}
 	std::string edge_label = "Hates";
 	g->create_edge(edge_label, in_label, new_label);
@@ -26,10 +26,12 @@ int main()
 	{
 	std::cout << x.first << "\t" << x.second.size() << "\n";
 	}
-
-
-
 	delete g; // Seems like there is something wrong with the destructor. When I comment out this line everything works fine
 	// but when it isn't commented, I get an error message when trying to compile.
 
 }
+
+
+
+
+

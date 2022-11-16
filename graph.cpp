@@ -1,8 +1,10 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include <cassert>
 
 #include "graph.h"
+
 namespace graph
 {
 	/*
@@ -61,5 +63,26 @@ namespace graph
 		   		   }
 	}
 
+
+	// Implementation from lecture code - directed-graph
+	// create a single edge based on information from the stream
+	// if it fails, return false, otherwise return true
+	bool Graph::generate_edge_from(std::istream* source)
+	{
+	   // read label of the first node
+	   std::string head_label = "";
+	   if(!IRI_input(&head_label, source)) return false;
+
+	   // read edge label
+	   std::string edge_label = "";
+	   if(!IRI_input(&edge_label, source)) return false;
+
+	   // read label of the second node
+	   std::string tail_label = "";
+	   if(!IRI_input(&tail_label, source)) return false;
+
+	   this->create_edge(edge_label, head_label tail_label);
+	   return true;
+	}
 
 }
