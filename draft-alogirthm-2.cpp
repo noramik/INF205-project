@@ -6,6 +6,19 @@
 // Alternatively. Have in a separate file potentially with namespace graph or smoething else like analyze
 namespace {
 
+
+    //STEP 1: ANALYSE ----------------
+    /*
+    1.1 Count instances
+        1.1.1 Find unique edges in p and q
+        1.1.2 (gå inn i edge_mappingen of hent ut lengden av listene)
+                Lagre antallet i en ny midlertidig map
+
+    1.2 Sjekk requirements
+
+        1.2.1 if any instances == 1: Velg dette som startpunkt
+        1.2.2 elif (p_1, p_n, q_1, q_m) < Et eller annet: Sjekk felles noder, bruk dette som startpunkt (evt. stopp hele koden)
+        1.2.3 else velg laveste antall av forekomst i den lengste pathen */
 std::tuple<const char, const int, *std::vector<Edge*>> analyse_graph(const path &p, const path &q) {
     ///Returns : which sequence pattern to initially search for with the corresponding starting points as edge-pointers
 
@@ -167,13 +180,13 @@ std::tuple<char, *std::vector<Edge*>> analyse_path_edges(string p_label, string 
 
 
 void iterate_forward(Node* node, const path &path, std::deque<string> stash, int current_index, const int &start_index, std::vector<std::vector<Node*>> &found_paths) { //COPY stash and index
-    //...iterate forward
-
+    /// iterate forward in the graph
     stash.push_back(node);
     current_index++; //must handle the special case of the first iteration?
 
     if (stash.size() == path.size()+1) { //a whole path is found! stash is made of nodes, so it will be one larger than the path
-        found_paths.push_back(stash)
+        found_paths.push_back(stash);
+        //HERE: start searching for a match with q
     }
     //do not continue to iterate if at the end of a path (fully finished path). return to the previous "recursion"
     else if (current_index == path.size()-1) {/*at the end of the path -> start iterating backwards...*/
@@ -217,23 +230,27 @@ void iterate_backward(Node* node, const path &path, std::deque<string> stash, in
 
 }
 
+// save variables we will use over and over again instead of sending them back and forth between functions
+struct analysis_variables{
+    std::vector<std::vector<Node*>> found_paths; //whole paths OR start and ending nodes...UPDATE from current solution
+
+    const int start_index; //index from sequence of our starting point
+    const Node* start_node; //corresponding tail_node to start_path_index
+
+    char path_letter; // p or q
+    path path; //actual sequence corresponding to p or q (the one we are searching trough atm)
+
+    const bool return_nodes; // user input
+    bool found_pattern = false; //change to true if p-q match found AND return_nodes=false. Then efficiently exit all recursion
+};
+
+
+} //end namespace
+
 namespace graph{
 
-type T find_pattern(const path p, const path q, bool return_nodes=False) {
+type T find_pattern(const path p, const path q, bool return_nodes=false) {
 
-
-    //STEP 1: ANALYSE ----------------
-    /*
-    1.1 Count instances
-        1.1.1 Find unique edges in p and q
-        1.1.2 (gå inn i edge_mappingen of hent ut lengden av listene)
-                Lagre antallet i en ny midlertidig map
-
-    1.2 Sjekk requirements
-
-        1.2.1 if any instances == 1: Velg dette som startpunkt
-        1.2.2 elif (p_1, p_n, q_1, q_m) < Et eller annet: Sjekk felles noder, bruk dette som startpunkt (evt. stopp hele koden)
-        1.2.3 else velg laveste antall av forekomst i den lengste pathen */
 
     auto [path_letter, start_path_index, starting_points] = analyse_graph(const path &p, const path &q);
     if !starting_points; //Somehow check if starting points is empty:
@@ -253,41 +270,36 @@ type T find_pattern(const path p, const path q, bool return_nodes=False) {
     STEP 3. Start søk ------------------
     */
 
+    // update a bunch of these variables... will be stored in a struct>:
+    // Create instance of struct and send as reference
+
+    bool found_pattern = false; //edit if and only if return_nodes is set to false. Set to true if full p-q pattern is found
+                                   //All recursions will check (if (found_pattern) return true), so
+                                   // that we can more efficiently unwind all recursive stacks as we don't need to keep iterating
+
+
     std::deque<string> STASH; //current path. Will continously be made several copies. DEQUE or OWN simple IMPLEMENTATION?
     std::vector<std::vector<Node*>> found_paths; //all initially found paths of p or q (whomever we might start with) will be stored here for each rank
     const Node* start_node;
-    //const int start_path_index; //from the analysis
+    const int start_path_index; //from the analysis
     int current_index = start_path_index; //
 
+    // Find all matching patterns of path_letter (p or q)
     for (Edge* edge : starting_points) {
         STASH.push_back(edge.tail_node)
-        //STASH.push_back(edge.head_node)
 
+        //using recursive function to iterate trough graph until patterns are found or not found
         iterate_forward(edge.head_node, path path_letter, STASH, current_index, &start_path_index, &found_paths); //path_letter = p or q
     }
     //----HERE: found_paths now contain all found patterns of either p or q
 
-/*
-iterate_forward(node, stash);
-
-    for edge in node.next_edges():
-
-        if edge == match:
-            current_index ++;
-            stash.append(edge.head_node())
-
-            if hele path funnet:
-                all_paths_found.push_back(stash)
-
-            if current_index == len(p)-1:
-                iterate_backwards(start_node, stash)
+    //NO: delete
+    //Find all matching patterns connecting p and q
+    //for (std::vector<Node*> pattern: found_paths) {
+    //    Node* initial_node = pattern[0];
 
 
+    }
 
-            iterate_forward(edge.head_node, stash)
-
-
-
-*/
 }
 
