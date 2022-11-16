@@ -86,4 +86,11 @@ namespace graph
 	   return true;
 	}
 
+
+	 //I/O stream operator overloading for Graph
+	// Copied from lecture code
+	std::istream& operator>>(std::istream& is, Graph& g) {
+	   g.in(&is);
+	   return is;
+	}
 }
