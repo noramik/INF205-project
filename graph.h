@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <map>
 
+#include "query.h"
+
 namespace graph
 {
 	class Edge; // Edge class is defined here to avoid problems when we declare variables as Edge* in Node class.

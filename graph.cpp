@@ -4,6 +4,7 @@
 #include <cassert>
 
 #include "graph.h"
+//#include "query.h" // I don't think this was included in directed-graph example but I don't get code to run without it
 
 namespace graph
 {
@@ -81,7 +82,7 @@ namespace graph
 	   std::string tail_label = "";
 	   if(!IRI_input(&tail_label, source)) return false;
 
-	   this->create_edge(edge_label, head_label tail_label);
+	   this->create_edge(edge_label, head_label, tail_label);
 	   return true;
 	}
 
