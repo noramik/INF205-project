@@ -92,6 +92,9 @@ namespace graph
 	Move_constructor()?
 	move_assignment()?
 	*/
+	// apply query, write to out
+	void query(Query* q, std::ostream* out);
+
 
 
 	private:
@@ -101,5 +104,6 @@ namespace graph
 	std::map<std::string, Node*> nodes; // What data stucture here? Map? Set? vector?
 	bool generate_edge_from(std::istream* source); // Implementation of this copied from directed-graph example.
 	};
+	std::istream& operator>>(std::istream& is, graph::Graph& g);
 }
 #endif
