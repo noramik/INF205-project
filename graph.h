@@ -8,6 +8,8 @@
 #include <unordered_map>
 #include <map>
 
+#include "query.h"
+
 namespace graph
 {
 	class Edge; // Edge class is defined here to avoid problems when we declare variables as Edge* in Node class.
@@ -70,6 +72,11 @@ namespace graph
 	void create_edge(std::string in_label, std::string head_node_name, std::string tail_node_name);
 	std::map<std::string, Node*> get_nodes() const {return this->nodes;}
 	std::unordered_map<std::string, std::vector<Edge*> > get_edges() const {return this->edges;}
+	// in method copied from directed-graph example from lecture.
+    // read from *source
+    void in(std::istream* source) {
+       while(this->generate_edge_from(source)) {}
+    };// read edge by edge, until generate_edge_from returns false
 	/*
 	void generate_graph(source) // reading from file and generating graph.
 	print_graph()?
@@ -92,7 +99,7 @@ namespace graph
 	std::unordered_map<std::string, std::vector<Edge*> > edges; //Labels as keys, pointers to edge object as value. Maybe list of pointers as values, and then use map instead of multimap.
 	// Used unordered_map instead of map. Usually faster, i think for our use-case, an ordered map wouldn't be neccessary either way.
 	std::map<std::string, Node*> nodes; // What data stucture here? Map? Set? vector?
+	bool generate_edge_from(std::istream* source); // Implementation of this copied from directed-graph example.
 	};
-
 }
 #endif
