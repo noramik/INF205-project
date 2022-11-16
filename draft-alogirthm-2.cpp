@@ -172,16 +172,21 @@ void iterate_forward(Node* node, const path &path, std::deque<string> stash, int
     if (stash.size() == path.size()+1) { //a whole path is found! stash is made of nodes, so it will be one larger than the path
         found_paths.push_back(stash)
     }
-    //do not continue to iterate if at the end of a path. return to the previoud "recursion"
-    else if {//next_edges does not exist, do not do anything}
+    //do not continue to iterate if at the end of a path (fully finished path). return to the previous "recursion"
+    else if (current_index == path.size()) {/*at the end of the path -> start iterating backwards...*/ iterate_backward(*args) }
+    //OBS! Figure out if current index is consistent with path or stash
     else {
-        // check if node.next_edes exists!
-        // then iterate
-        for (Edge* edge: node.next_edges()) {
 
-            if (edge.get_label() == path[current_index]) { //a match is found. Double check. what is index now?
-                iterate_forward(edge.get_head_node(), &path, stash, current_index, &found_paths) //DOUBLE CHECK!
+        if (node.next_edges) {//make sure it does not point to a nullpointer
+            for (Edge* edge: node.next_edges()) {
+
+                if (edge.get_label() == path[current_index]) { //a match is found. Double check. what is index now?
+                    iterate_forward(edge.get_head_node(), &path, stash, current_index, &found_paths) //DOUBLE CHECK!
+            }
+
         }
+
+
 
     }
     //DELETE
@@ -222,7 +227,7 @@ void iterate_forward(Node* node, const path &path, std::deque<string> stash, int
             iterate_forward(edge.head_node, stash)*/
 
 
-}
+
 
 }
 
