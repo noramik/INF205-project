@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <unordered_map>
 #include <map>
 
 namespace graph
@@ -22,8 +23,8 @@ namespace graph
 	std::string get_label() const {return this->label;} // spørsmål: må det være const her? hvorfor?
 	std::vector<Edge*> get_prev_edges() const {return this->prev_edges;} // returning edges leading to the node. Can this even be const as prev_edges might change
 	std::vector<Edge*> get_next_edges() const {return this->next_edges;} // returning edges going from the node. Can this even be const as next_edges might change
-	void append_prev_edges(new_edge) {this->prev_edges.push_back(new_edge);}
-	void append_next_edges(new_edge) {this->next_edges.push_back(new_edge);}
+	void append_prev_edges(Edge* new_edge) {this->prev_edges.push_back(new_edge);}
+	void append_next_edges(Edge* new_edge) {this->next_edges.push_back(new_edge);}
 
 
 
@@ -42,14 +43,14 @@ namespace graph
 		this->label=in_label;
 		this->set_head_node(head_node);
 		this->set_tail_node(tail_node);
-	}
+	};
 
 
 	std::string get_label() const {return this->label;};
 	Node* get_head_node() const {return this->head_node;}
 	Node* get_tail_node() const {return this->tail_node;}
-	void set_head_node(new_node) {this->head_node = new_node;}
-	void set_tail_node(new_node) {this->tail_node = new_node;}
+	void set_head_node(Node* new_node) {this->head_node = new_node;}
+	void set_tail_node(Node* new_node) {this->tail_node = new_node;}
 
 
 	private:
@@ -57,13 +58,19 @@ namespace graph
 	Node* head_node = nullptr; //probably, need default value
 	Node* tail_node = nullptr;
 	};
-	/*
-	class Graph
 
+	class Graph
+	{
 	public:
-	Constructor()
-	void create_node()
-	void create_edge()
+	Graph() {}; // Constructor, to be implemented
+	void create_node(std::string in_label){
+		Node* new_node = new Node(in_label);
+		this->nodes.insert({in_label, new_node});
+	};
+	void create_edge(std::string in_label, std::string head_node_name, std::string tail_node_name);
+	std::map<std::string, Node*> get_nodes() const {return this->nodes;}
+	std::unordered_map<std::string, std::vector<Edge*> > get_edges() const {return this->edges;}
+	/*
 	void generate_graph(source) // reading from file and generating graph.
 	print_graph()?
 
@@ -71,17 +78,21 @@ namespace graph
 	Node* get_node_pointer_by_unique_label() (?)
 
 	find_pattern(path p, path q, return_nodes=False);  #False betyr True/False answer. True betyr finn alle noder og returner med label.
-
-	Destructor() // default destructor or additional functionality for handling pointers?
-
+	*/
+	~Graph();// default destructor or additional functionality for handling pointers?
+	/*
 	Copy constructor and assignement or forbid copying.
 	Move_constructor()?
 	move_assignment()?
+	*/
 
 
 	private:
-	multimap? edges; //Labels as keys, pointers to edge object as value. Maybe list of pointers as values, and then use map instead of multimap.
-	nodes? // Do we need this
-*/
-}
+	// Should we use Edge* and Node* in the maps? I notice in the undir-inclist-graph.h, pointers aren't used, instead the Node object itself is used.
+	std::unordered_map<std::string, std::vector<Edge*> > edges; //Labels as keys, pointers to edge object as value. Maybe list of pointers as values, and then use map instead of multimap.
+	// Used unordered_map instead of map. Usually faster, i think for our use-case, an ordered map wouldn't be neccessary either way.
+	std::map<std::string, Node*> nodes; // What data stucture here? Map? Set? vector?
+	};
 
+}
+#endif
