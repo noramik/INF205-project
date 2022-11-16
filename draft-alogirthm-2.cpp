@@ -1,5 +1,6 @@
 #include <math.h> // floor
 #include <array>
+#include <vector>
 
 //Helper method, only used by this file?
 // Alternatively. Have in a separate file potentially with namespace graph or smoething else like analyze
@@ -165,21 +166,41 @@ std::tuple<char, *std::vector<Edge*>> analyse_path_edges(string p_label, string 
 void iterate_forward(Node* node, const path &path, std::deque<string> stash, int current_index, std::vector<std::vector<Node*>> &found_paths) { //COPY stash and index
     //...iterate forward
 
-    for (Edge* edge: node.next_edges()) {
+    stash.push_back(node);
+    current_index ++; //must handle the special case of the first iteration
+
+    if (stash.size() == path.size()+1) { //a whole path is found! stash is made of nodes, so it will be one larger than the path
+        found_paths.push_back(stash)
+    }
+    //do not continue to iterate if at the end of a path. return to the previoud "recursion"
+    else if {//next_edges does not exist, do not do anything}
+    else {
+        // check if node.next_edes exists!
+        // then iterate
+        for (Edge* edge: node.next_edges()) {
+
+            if (edge.get_label() == path[current_index]) { //a match is found. Double check. what is index now?
+                iterate_forward(edge.get_head_node(), &path, stash, current_index, &found_paths) //DOUBLE CHECK!
+        }
+
+    }
+    //DELETE
+    //for (Edge* edge: node.next_edges()) {
             //reset stash... problems
 
-        if (edge.get_label() == path[current_index]) { //a match is found
-            stash.push_back(node);
-            current_index ++;
+        //if (edge.get_label() == path[current_index]) { //a match is found
 
-            if (stash.size() == path.size()) { //a whole path is found!
-                found_paths.push_back(stash)
-            }
 
-            else if // at the end
 
-            else //iterate_forward recursive
-        }
+            //stash.push_back(node);
+            // ++;
+
+
+
+           // else if // at the end
+
+           // else //iterate_forward recursive
+        //}
 
 
 
@@ -245,7 +266,7 @@ type T find_pattern(const path p, const path q, bool return_nodes=False) {
     std::vector<std::vector<Node*>> found_paths; //all initially found paths of p or q (whomever we might start with) will be stored here for each rank
     const Node* start_node;
     const int start_path_index;
-    int current_index;
+    int current_index; //find out where this is
 
     for (Edge* edge : starting_points) {
         STASH.push_back(edge.tail_node)
