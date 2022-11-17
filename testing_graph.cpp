@@ -41,7 +41,7 @@ int main()
 
 int main(int argc, char** argv)
 {
-   assert(argc >= 3);  //Why is this 3, it throws an error, don't know why
+   assert(argc >= 2);  //Why is this 3, it throws an error, don't know why
 
    std::ifstream indata(argv[1]);
    if(!indata)
@@ -51,7 +51,13 @@ int main(int argc, char** argv)
    }
    graph::Graph g;
    indata >> g;
+   std::map<std::string, graph::Node*> nodes = g.get_nodes();
+	for (const auto& x: nodes)
+	{
+		std::cout << x.first << "\t" << x.second->get_label() << std::endl;
+	}
    indata.close();
+
    // std::cout << "\nContent of graph g:\n" << g << "\n";
 
    /*

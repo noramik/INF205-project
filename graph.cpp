@@ -19,22 +19,45 @@ namespace graph
 	}
 
 	 */
-	void Graph::create_edge(std::string in_label, std::string head_node_name, std::string tail_node_name) //We need head_node and tail_node here right? Or else we have an edge
-	// that doesn't connect anything.
+
+	Node* Graph::create_node(std::string node_label)
 	{
-		Node* head_node = new Node(head_node_name);
-		Node* tail_node = new Node(tail_node_name);
-		Edge* new_edge = new Edge(in_label, head_node, tail_node); // is this pointer handled safely? When does it get deallocated? With the graph object?
-		if (this->edges.find(in_label) == this->edges.end()) // Checks whether the label is in the map
+		if (this->nodes.find(node_label) == this->nodes.end()) //Checks whether the node already exists in the nodes map, if it doesn't it creates it.
 		{
-			std::vector<Edge*> e; // intializes vector of Edge*
-			e.push_back(new_edge); //Adds new_edge to vector
-			this->edges.insert({in_label, e});
+			Node* new_node = new Node(node_label);
+			this->nodes.insert({node_label, new_node});
+			return new_node;
 		}
 		else
 		{
-			this->edges.at(in_label).push_back(new_edge);
+			 return nodes.find(node_label)->second; // Finds the node_label in the map, and returns the Node*
 		}
+
+	}
+	void Graph::create_edge(std::string edge_label, std::string head_node_name, std::string tail_node_name) //We need head_node and tail_node here right? Or else we have an edge
+	// that doesn't connect anything.
+	{
+
+		Node* head_node = this->create_node(head_node_name);
+
+		Node* tail_node = this->create_node(tail_node_name);
+
+
+		Edge* new_edge = new Edge(edge_label, head_node, tail_node); // is this pointer handled safely? When does it get deallocated? With the graph object?
+		head_node->append_next_edges(new_edge); // Would this be correct?
+		tail_node->append_prev_edges(new_edge);
+		if (this->edges.find(edge_label) == this->edges.end()) // Checks whether the label is in the map
+		{
+			std::vector<Edge*> e; // intializes vector of Edge*
+			e.push_back(new_edge); //Adds new_edge to vector
+			this->edges.insert({edge_label, e});
+		}
+		else
+		{
+			this->edges.at(edge_label).push_back(new_edge);
+		}
+
+
 
 	}
 
