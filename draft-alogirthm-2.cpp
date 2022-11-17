@@ -179,27 +179,33 @@ std::tuple<char, *std::vector<Edge*>> analyse_path_edges(string p_label, string 
 
 
 
-void iterate_forward(Node* node, const path &path, std::deque<string> stash, int current_index, const int &start_index, std::vector<std::vector<Node*>> &found_paths) { //COPY stash and index
+//void iterate_forward(Node* node, std::deque<string> stash, int current_index, &var_store) { //COPY stash and index
+void iterate_forward(Edge* edge, std::deque<string> stash, int current_index, &var_store) { //COPY stash and index
     /// iterate forward in the graph
-    stash.push_back(node);
-    current_index++; //must handle the special case of the first iteration?
 
-    if (stash.size() == path.size()+1) { //a whole path is found! stash is made of nodes, so it will be one larger than the path
-        found_paths.push_back(stash);
-        //HERE: start searching for a match with q
+
+    if (current_index == var_store.path.size()-1) stash.push_back(edge.get_head_node()); //at the end
+
+    if (stash.size() == 2) {
+            var_store.found_patterns.push_back(stash);  // a whole path is found! ONLY P
+                                                        //might change if stash is not a deque...
+            //HERE: Start searching for matching q!
     }
-    //do not continue to iterate if at the end of a path (fully finished path). return to the previous "recursion"
-    else if (current_index == path.size()-1) {/*at the end of the path -> start iterating backwards...*/
 
-            iterate_backward(stash[0], &path, stash, start_index, &found_paths, true) } //stash[0] is the initial node, where we will search backwards from. start_index will become current_index
-    //OBS! Figure out if current index is consistent with path or stash
+    //do not continue to iterate if at the end of a path (fully finished path). return to the previous "recursion"
+    else if (current_index == var_store.path.size()-1) {/*at the end of the path -> start iterating backwards...*/
+            current_index = var_store.start_index; //update current_index as we are about to move backwards
+            iterate_backward(var_store.start_edge, stash, int current_index, &var_store) } //<??start_index will become current_index
+
     else {
 
-        if (node.get_next_edges()) {//make sure it does not point to a nullpointer
-            for (Edge* edge: node.get_next_edges()) {
+        if (edge.get_head_node().get_next_edges()) {//make sure it does not point to a nullpointer
 
-                if (edge.get_label() == path[current_index]) { //a match is found. Double check. what is index now?
-                    iterate_forward(edge.get_head_node(), &path, stash, current_index, &start_index, &found_paths)
+            current_index++; //must handle the special case of the first iteration?
+            for (Edge* edge: edge.get_head_node().get_next_edges()) {
+
+                if (edge.get_label() == var_store.path[current_index]) { //a match is found. Double check. what is index now?
+                    iterate_forward(edge, stash, current_index)
                 }
             }
         }
@@ -207,41 +213,48 @@ void iterate_forward(Node* node, const path &path, std::deque<string> stash, int
 }
 
 
-void iterate_backward(Node* node, const path &path, std::deque<string> stash, int current_index, std::vector<std::vector<Node*>> &found_paths, bool first_iter=false) {// we don't need start_index anymore
+//void iterate_backward(Node* node, const path &path, std::deque<string> stash, int current_index, bool first_iter=false) {// we don't need start_index anymore
+void iterate_backward(Edge* edge, std::deque<string> stash, int current_index, &var_store) {
+    //we do not go here if we started at index 0
 
-    //we have our initial start node already in stash as stash[0]
-    current_index--;
-    if (!first_iter) stash.push_front(node); //for the first iteration, stash[0] is already the current node. We do not add it twice
-
-
-    if (stash.size() == path.size()+1) { //a whole path is found! stash is made of nodes, so it will be one larger than the path
-        found_paths.push_back(stash)
+    if (current_index == 0) {
+        stash.push_back(edge.get_tail_node());
+        var_store.found_patterns.push_back(stash); //a whole path found! ONLY p
     }
 
-    else if node.get_prev_edges() { // make sure it does not point to a nullpointer
-        for (Edge* edge: node.get_prev_edges()) {
+    else if (edge.get_tail_node().get_prev_edges()) { // make sure it does not point to a nullpointer
+        current_index--;
+        for (Edge* edge: edge.get_tail_node().get_prev_edges()) {
 
             if (edge.get_label() == path[current_index]) { //if match!
-                iterate_backward(edge.get_tail_node(), &path, stash, current_index, &found_paths);
+
+                //can move this:
+                //if current_index == 0; /...
+                //else: iterate_backward
+
+                iterate_backward(edge, stash, current_index, &var_store);
             }
 
         }
     }
 
+
+
 }
 
-// save variables we will use over and over again instead of sending them back and forth between functions
-struct analysis_variables{
-    std::vector<std::vector<Node*>> found_paths; //whole paths OR start and ending nodes...UPDATE from current solution
-
+// save variables we will use over and over again instead of sending them back and forth between functions. Place in namespace
+struct varStorage{
+    //!!innhold av found_patterns må matche med stash som currently er deque
+    std::vector<std::vector<Node*>> found_patterns; //start and end nodes connected by both p and q in pairs
     const int start_index; //index from sequence of our starting point
-    const Node* start_node; //corresponding tail_node to start_path_index
+    Node* start_node; //corresponding tail_node to start_index, where we start iterating. NOT constant, changes in for loops
+    Edge* start_edge; //instead of node. REMOVE START_NODE
 
     char path_letter; // p or q
     path path; //actual sequence corresponding to p or q (the one we are searching trough atm)
 
     const bool return_nodes; // user input
-    bool found_pattern = false; //change to true if p-q match found AND return_nodes=false. Then efficiently exit all recursion
+    bool match = false; //change to true if p-q match found AND return_nodes=false. Then efficiently exit all recursion
 };
 
 
@@ -256,8 +269,6 @@ type T find_pattern(const path p, const path q, bool return_nodes=false) {
     if !starting_points; //Somehow check if starting points is empty:
         return /*No patterns found*/;
 
-    //IDEA: Create a struct that holds start_index, found_paths and path. Then we don't have to send them everytime, but only a reference to an instance of the struct
-
 
 /*
     STEP 2. Deleger startpunkter til ranks (parallellisering) --------------
@@ -267,36 +278,41 @@ type T find_pattern(const path p, const path q, bool return_nodes=false) {
     delete[] starting_points //IMPORTANT!!!
     /*
 
+
     STEP 3. Start søk ------------------
     */
+    // Create instance of struct, fill in values and send as reference
+    varStorage var_store; //each rank has it's pwn
+    var_store.start_index = start_path_index;
+    var_store.path_letter = path_letter;
 
-    // update a bunch of these variables... will be stored in a struct>:
-    // Create instance of struct and send as reference
-
-    bool found_pattern = false; //edit if and only if return_nodes is set to false. Set to true if full p-q pattern is found
-                                   //All recursions will check (if (found_pattern) return true), so
-                                   // that we can more efficiently unwind all recursive stacks as we don't need to keep iterating
+    var_store.path = (path_letter == "p") ? p : q; //short hand for if-else https://www.w3schools.com/cpp/cpp_conditions_shorthand.asp
+    var_store.return_nodes = return_nodes;
 
 
-    std::deque<string> STASH; //current path. Will continously be made several copies. DEQUE or OWN simple IMPLEMENTATION?
-    std::vector<std::vector<Node*>> found_paths; //all initially found paths of p or q (whomever we might start with) will be stored here for each rank
-    const Node* start_node;
-    const int start_path_index; //from the analysis
-    int current_index = start_path_index; //
+
+
+    std::deque<string> stash; //current path. Will continously be made several copies. DEQUE or OWN simple IMPLEMENTATION?
+                              //stash will only contain start and end node!
+                              //CHANGE TO array of set size 2!!!
+    int current_index = start_path_index; //each recursion need it's own in it's scope
+
+
+    //SPECIAL CASE: ONLY 1 EDGE IN PATH!
 
     // Find all matching patterns of path_letter (p or q)
     for (Edge* edge : starting_points) {
-        STASH.push_back(edge.tail_node)
+
+        var_store.start_edge = edge //COPY
+
+        if (var_store.start_index == 0) stash.push_back(edge.get_tail_node()); //if we start at the beginning
+        //recursion will handle all else cases
+
 
         //using recursive function to iterate trough graph until patterns are found or not found
-        iterate_forward(edge.head_node, path path_letter, STASH, current_index, &start_path_index, &found_paths); //path_letter = p or q
+        iterate_forward(edge, stash, current_index, &var_store);
     }
-    //----HERE: found_paths now contain all found patterns of either p or q
-
-    //NO: delete
-    //Find all matching patterns connecting p and q
-    //for (std::vector<Node*> pattern: found_paths) {
-    //    Node* initial_node = pattern[0];
+    //----HERE: found_patterns now contain all found patterns of either p or q
 
 
     }
