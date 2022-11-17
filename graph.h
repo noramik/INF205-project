@@ -66,7 +66,7 @@ namespace graph
 	public:
 	Graph() {}; // Constructor, to be implemented
 	Node* create_node(std::string in_label);
-	void create_edge(std::string in_label, std::string head_node_name, std::string tail_node_name);
+	Edge* create_edge(std::string in_label, std::string head_node_name, std::string tail_node_name);
 	std::map<std::string, Node*> get_nodes() const {return this->nodes;}
 	std::unordered_map<std::string, std::vector<Edge*> > get_edges() const {return this->edges;}
 	// in method copied from directed-graph example from lecture.
@@ -90,7 +90,7 @@ namespace graph
 	move_assignment()?
 	*/
 	// apply query, write to out
-	void query(Query* q, std::ostream* out);
+
 
 
 
@@ -99,8 +99,9 @@ namespace graph
 	std::unordered_map<std::string, std::vector<Edge*> > edges; //Labels as keys, pointers to edge object as value. Maybe list of pointers as values, and then use map instead of multimap.
 	// Used unordered_map instead of map. Usually faster, i think for our use-case, an ordered map wouldn't be neccessary either way.
 	std::map<std::string, Node*> nodes; // What data stucture here? Map? Set? vector?
-	bool generate_edge_from(std::istream* source); // Implementation of this copied from directed-graph example.
+	Edge* generate_edge_from(std::istream* source); // Implementation of this copied from directed-graph example.
 	};
-	std::istream& operator>>(std::istream& is, graph::Graph& g);
+
 }
+std::istream& operator>>(std::istream& is, graph::Graph& g);
 #endif

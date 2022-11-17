@@ -6,8 +6,8 @@
 #include "graph.h"
 //#include "query.h" // I don't think this was included in directed-graph example but I don't get code to run without it
 
-namespace graph
-{
+using namespace graph;
+
 	/*
 	void create_node(std::string in_label) // should label and edges be passed as an argument?
 	// We have to do that directly in with passing arguments here and passing them to Node constructor
@@ -34,7 +34,7 @@ namespace graph
 		}
 
 	}
-	void Graph::create_edge(std::string edge_label, std::string head_node_name, std::string tail_node_name) //We need head_node and tail_node here right? Or else we have an edge
+	Edge* Graph::create_edge(std::string edge_label, std::string head_node_name, std::string tail_node_name) //We need head_node and tail_node here right? Or else we have an edge
 	// that doesn't connect anything.
 	{
 
@@ -57,7 +57,7 @@ namespace graph
 			this->edges.at(edge_label).push_back(new_edge);
 		}
 
-
+		return new_edge;
 
 	}
 
@@ -91,29 +91,55 @@ namespace graph
 	// Implementation from lecture code - directed-graph
 	// create a single edge based on information from the stream
 	// if it fails, return false, otherwise return true
-	bool Graph::generate_edge_from(std::istream* source)
+	Edge* Graph::generate_edge_from(std::istream* source)
 	{
+	   char single_symbol = '\0';
+
 	   // read label of the first node
-	   std::string head_label = "";
-	   if(!IRI_input(&head_label, source)) return false;
+	   while(single_symbol != '<')
+	   {
+	      *source >> single_symbol;
+	      if(single_symbol == '\0') return nullptr;  // format: \0 means that we are done
+	   }
+	   std::string node_a_label = "";
+	   for(*source >> single_symbol; single_symbol != '>'; *source >> single_symbol)
+	      node_a_label += single_symbol;
+	   if(node_a_label == "") return nullptr;  // format: empty label means that we are done
+
+
 
 	   // read edge label
+	   while(single_symbol != '<')
+	   {
+		  *source >> single_symbol;
+		  if(single_symbol == '\0') return nullptr;  // format: \0 means that we are done
+	   }
 	   std::string edge_label = "";
-	   if(!IRI_input(&edge_label, source)) return false;
+	   for(*source >> single_symbol; single_symbol != '>'; *source >> single_symbol)
+		  edge_label += single_symbol;
+	   if(edge_label == "") return nullptr;
+
 
 	   // read label of the second node
-	   std::string tail_label = "";
-	   if(!IRI_input(&tail_label, source)) return false;
+	   while(single_symbol != '<')
+	   {
+	      *source >> single_symbol;
+	      if(single_symbol == '\0') return nullptr;  // format: \0 means that we are done
+	   }
+	   std::string node_b_label = "";
+	   for(*source >> single_symbol; single_symbol != '>'; *source >> single_symbol)
+	      node_b_label += single_symbol;
+	   if(node_b_label == "") return nullptr;  // format: empty label means that we are done
 
-	   this->create_edge(edge_label, head_label, tail_label);
-	   return true;
+	   return this->create_edge(edge_label, node_a_label, node_b_label);
+
+
+
 	}
-
 
 	 //I/O stream operator overloading for Graph
 	// Copied from lecture code
-	std::istream& operator>>(std::istream& is, Graph& g) {
+	std::istream& operator>>(std::istream& is, graph::Graph& g) {
 	   g.in(&is);
 	   return is;
 	}
-}
