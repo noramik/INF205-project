@@ -72,8 +72,11 @@ namespace graph
 	// in method copied from directed-graph example from lecture.
     // read from *source
     void in(std::istream* source) {
-       while(this->generate_edge_from(source)) {}
-    };// read edge by edge, until generate_edge_from returns false
+       while(this->generate_edge_from(source)) {} };// read edge by edge, until generate_edge_from returns false
+    void out(std::ostream* target){
+    	print_graph(target);
+    }
+    void print_graph(std::ostream* target);
 	/*
 	void generate_graph(source) // reading from file and generating graph.
 	print_graph()?
@@ -89,7 +92,7 @@ namespace graph
 	Move_constructor()?
 	move_assignment()?
 	*/
-	// apply query, write to out
+
 
 
 
@@ -104,4 +107,5 @@ namespace graph
 
 }
 std::istream& operator>>(std::istream& is, graph::Graph& g);
+std::ostream& operator<<(std::ostream& os, graph::Graph& g);
 #endif

@@ -132,14 +132,24 @@ using namespace graph;
 	   if(node_b_label == "") return nullptr;  // format: empty label means that we are done
 
 	   return this->create_edge(edge_label, node_a_label, node_b_label);
-
-
-
 	}
 
+	void Graph::print_graph(std::ostream* target)
+	{
+		for (auto it = this->nodes.begin(); it != this->nodes.end(); it++)
+		{
+		*target << it->first << "\n";
+		}
+	}
 	 //I/O stream operator overloading for Graph
 	// Copied from lecture code
 	std::istream& operator>>(std::istream& is, graph::Graph& g) {
 	   g.in(&is);
 	   return is;
+	}
+
+	std::ostream& operator<<(std::ostream& os, graph::Graph& g)
+	{
+		g.out(&os);
+		return os;
 	}
