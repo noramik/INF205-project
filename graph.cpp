@@ -146,7 +146,7 @@ using namespace graph;
 		{
 			for (auto edge_it = it->second.begin(); edge_it != it->second.end(); edge_it++)
 			{
-		*target << edge_it->get_head_node()->get_label() << "\t" << it->first << "\t" << edge_it->get_tail_node()->get_label() <<"\n";
+				*target << edge_it->get_head_node()->get_label() << "\t" << it->first << "\t" << edge_it->get_tail_node()->get_label() <<"\n";
 			}
 		}
 	}
