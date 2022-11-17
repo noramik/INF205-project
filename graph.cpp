@@ -24,7 +24,7 @@ using namespace graph;
 	{
 		if (this->nodes.find(node_label) == this->nodes.end()) //Checks whether the node already exists in the nodes map, if it doesn't it creates it.
 		{
-			Node* new_node = new Node(node_label);
+			Node* new_node = new Node(node_label); // This need to be on the heap because we want the actual new_node to be returned, not a copy of it
 			this->nodes.insert({node_label, new_node});
 			return new_node;
 		}
@@ -32,9 +32,9 @@ using namespace graph;
 		{
 			 return nodes.find(node_label)->second; // Finds the node_label in the map, and returns the Node*
 		}
-
 	}
-	Edge* Graph::create_edge(std::string edge_label, std::string head_node_name, std::string tail_node_name) //We need head_node and tail_node here right? Or else we have an edge
+
+	void Graph::create_edge(std::string edge_label, std::string head_node_name, std::string tail_node_name) //We need head_node and tail_node here right? Or else we have an edge
 	// that doesn't connect anything.
 	{
 
@@ -57,7 +57,7 @@ using namespace graph;
 			this->edges.at(edge_label).push_back(new_edge);
 		}
 
-		return new_edge;
+
 
 	}
 
@@ -78,20 +78,26 @@ using namespace graph;
 			   for (auto x=edge_vector.begin(); x != edge_vector.end(); x++) delete *x; // Not sure if this works or not, but at least no error messages.
 		   }
 
+		   this->edges.clear(); // Not sure if this is needed, clears the whole map, both key and val.
+
 		   // Deleting Node* on the heap
 		   // Do I need to delete the key as well? that shouldn't be on the heap though? It's just std::string
 		   for (auto iter : this->nodes)
-		   		   {
-		   			   Node* node = iter.second;
-		   			   delete node; // Not sure if this works or not, but at least no error messages.
-		   		   }
+			   {
+				   Node* node = iter.second;
+				   delete node; // Not sure if this works or not, but at least no error messages.
+			   }
+		   this->nodes.clear(); // Not sure if this is needed, clears the whole map, both key and val.
+
+
+		//Need to remember to delete the pointers from Node and Edge class as well
 	}
 
 
 	// Implementation from lecture code - directed-graph
 	// create a single edge based on information from the stream
 	// if it fails, return false, otherwise return true
-	Edge* Graph::generate_edge_from(std::istream* source)
+	bool Graph::generate_edge_from(std::istream* source)
 	{
 	   char single_symbol = '\0';
 
@@ -99,46 +105,49 @@ using namespace graph;
 	   while(single_symbol != '<')
 	   {
 	      *source >> single_symbol;
-	      if(single_symbol == '\0') return nullptr;  // format: \0 means that we are done
+	      if(single_symbol == '\0') return false;  // format: \0 means that we are done
 	   }
 	   std::string node_a_label = "";
 	   for(*source >> single_symbol; single_symbol != '>'; *source >> single_symbol)
 	      node_a_label += single_symbol;
-	   if(node_a_label == "") return nullptr;  // format: empty label means that we are done
-
+	   if(node_a_label == "") return false;  // format: empty label means that we are done
 
 
 	   // read edge label
 	   while(single_symbol != '<')
 	   {
 		  *source >> single_symbol;
-		  if(single_symbol == '\0') return nullptr;  // format: \0 means that we are done
+		  if(single_symbol == '\0') return false;  // format: \0 means that we are done
 	   }
 	   std::string edge_label = "";
 	   for(*source >> single_symbol; single_symbol != '>'; *source >> single_symbol)
 		  edge_label += single_symbol;
-	   if(edge_label == "") return nullptr;
+	   if(edge_label == "") return false;
 
 
 	   // read label of the second node
 	   while(single_symbol != '<')
 	   {
 	      *source >> single_symbol;
-	      if(single_symbol == '\0') return nullptr;  // format: \0 means that we are done
+	      if(single_symbol == '\0') return false;  // format: \0 means that we are done
 	   }
 	   std::string node_b_label = "";
 	   for(*source >> single_symbol; single_symbol != '>'; *source >> single_symbol)
 	      node_b_label += single_symbol;
-	   if(node_b_label == "") return nullptr;  // format: empty label means that we are done
+	   if(node_b_label == "") return false;  // format: empty label means that we are done
 
-	   return this->create_edge(edge_label, node_a_label, node_b_label);
+	   this->create_edge(edge_label, node_a_label, node_b_label);
+	   return true;
 	}
 
 	void Graph::print_graph(std::ostream* target)
 	{
-		for (auto it = this->nodes.begin(); it != this->nodes.end(); it++)
+		for (auto it = this->edges.begin(); it != this->edges.end(); it++)
 		{
-		*target << it->first << "\n";
+			for (auto edge_it = it->second.begin(); edge_it != it->second.end(); edge_it++)
+			{
+		*target << edge_it->get_head_node()->get_label() << "\t" << it->first << "\t" << edge_it->get_tail_node()->get_label() <<"\n";
+			}
 		}
 	}
 	 //I/O stream operator overloading for Graph
