@@ -51,13 +51,21 @@ int main(int argc, char** argv)
    }
    graph::Graph g;
    indata >> g;
+   /*
    std::map<std::string, graph::Node*> nodes = g.get_nodes();
 	for (const auto& x: nodes)
 	{
-		std::cout << x.first << "\t" << x.second->get_label() << std::endl;
+		std::cout << x.first << "\t"  << std::endl;
 	}
-   indata.close();
 
+	*/
+
+   std::unordered_map<std::string, std::vector<Edge*> > edges = g.get_edges();
+   for (const auto& x: edges)
+   	{
+   		std::cout << x.first << "\t"  << std::endl;
+   	}
+	indata.close();
    // std::cout << "\nContent of graph g:\n" << g << "\n";
 
    /*
