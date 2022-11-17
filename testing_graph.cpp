@@ -55,11 +55,12 @@ int main(int argc, char** argv)
    std::map<std::string, graph::Node*> nodes = g.get_nodes();
 	for (const auto& x: nodes)
 	{
-		std::cout << x.first << "\t"  << std::endl;
+		std::cout << x.first << "\t" << x.second->get_prev_edges()[0]->get_label()  << std::endl;
 	}
-
 	*/
+	std::cout << g;
 
+/*
    std::unordered_map<std::string, std::vector<Edge*> > edges = g.get_edges();
    for (const auto& x: edges)
    	{
