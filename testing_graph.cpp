@@ -58,6 +58,20 @@ int main(int argc, char** argv)
 		std::cout << x.first << "\t"  << std::endl;
 	}
 	*/
+
+
+
+
+	for (int i = 1; i < 1000000; i++)
+	{
+		std::string head = "head";
+		std::string tail = "tail";
+		head += std::to_string(i);
+		tail += std::to_string(i);
+		std::string label = "label";
+		label += std::to_string(i);
+		g.create_node(head);
+	}
 	std::cout << g;
 
 	/*
