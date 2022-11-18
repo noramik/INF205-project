@@ -189,6 +189,11 @@ void iterate_forward(Edge* edge, std::deque<string> stash, int current_index, &v
            // var_store.found_patterns.push_back(stash);  // a whole path is found! ONLY P
                                                         //might change if stash is not a deque...
             //HERE: Start searching for matching q!
+            current_index = 0;
+            varStorage copy_var_store = var_store; //SHALLOW copy, does this work as wanted?
+            copy_var_store.switch_parameters();
+            search_match(stash[0], &stash, current_index, &copy_var_store);
+            if *var_store.exit return; //THIS IS NOT UPDATED YET exit is still always false...
             //and return true if var_store.return_nodes = false and both p and q is found;
     }
 
@@ -196,30 +201,39 @@ void iterate_forward(Edge* edge, std::deque<string> stash, int current_index, &v
     else if (current_index == var_store.path.size()-1) {/*at the end of the path -> start iterating backwards...*/
             current_index = var_store.start_index; //update current_index as we are about to move backwards
             iterate_backward(var_store.start_edge, stash, int current_index, &var_store) } //<??start_index will become current_index
+            if *var_store.exit return;
 
-    else {
+    else if (edge.get_head_node().get_next_edges()) {//make sure it does not point to a nullpointer
 
-        if (edge.get_head_node().get_next_edges()) {//make sure it does not point to a nullpointer
+        current_index++; //must handle the special case of the first iteration?
+        for (Edge* edge: edge.get_head_node().get_next_edges()) {
 
-            current_index++; //must handle the special case of the first iteration?
-            for (Edge* edge: edge.get_head_node().get_next_edges()) {
+            if (edge.get_label() == var_store.path[current_index]) { //a match is found. Double check. what is index now?
+                iterate_forward(edge, stash, current_index);
+                if *var_store.exit return;
 
-                if (edge.get_label() == var_store.path[current_index]) { //a match is found. Double check. what is index now?
-                    iterate_forward(edge, stash, current_index)
-                }
             }
         }
     }
+    else return;
 }
+
 
 
 void iterate_backward(Edge* edge, std::deque<string> stash, int current_index, &var_store) {
     //we do not go here if we started at index 0
 
     if (current_index == 0) {
-        stash.push_front(edge.get_tail_node()); //does not matter which order the nodes are in?? do not use deque...
+        stash.push_front(edge.get_tail_node()); //order matters. stash must be (start, end)
         //var_store.found_patterns.push_back(stash); //a whole path found! ONLY p
          //HERE: Start searching for matching q!
+
+         //current index is already set to 0, do not need to update it
+         varStorage copy_var_store = var_store; //SHALLOW copy, does this work as wanted?
+         copy_var_store.switch_parameters();
+         search_match(stash[0], &stash, current_index, &copy_var_store);
+         if *var_store.exit return;
+
     }
 
     else if (edge.get_tail_node().get_prev_edges()) { // make sure it does not point to a nullpointer
@@ -233,10 +247,13 @@ void iterate_backward(Edge* edge, std::deque<string> stash, int current_index, &
                 //else: iterate_backward
 
                 iterate_backward(edge, stash, current_index, &var_store);
+                if *var_store.exit return;
             }
 
         }
+        return;
     }
+    else return;
 }
 
 //STASH must contain nodes in the order: (start, end)
@@ -246,35 +263,42 @@ void search_match(Node* node, std::deque<string> &stash, int current_index, &var
 
         if (node == stash.back()) { //.back() has O(1) https://www.geeksforgeeks.org/vectorfront-vectorback-c-stl/
             //obs! can we compare the pointers? or do we have to compare the labels...
-            var_store.found_patterns.push_back(stash);
-            var_store.match=true //obs! does not work with this copy
+            var_store.found_patterns->push_back(stash);
+
             if (var_store.return_nodes == false) {
+                var_store.exit->true //obs! make work with the current copy
                 //..........send to rank 0? but what if only one rank...
                 //return true
                 //else return false?
-            }
-        }
+            };
+            //return true
+        } //we don't really need these returns? but the might be neccessary to exit the code quickly
+        //else return false //no match to be found
+        return;
     }
 
-    else {
-        if (node.get_next_edges()) { //not a nullpointer
-            current_index++;
-            for (Edge* edge: node_get_next_edges()) {
-                if (edge.get_label() == var_store.path[current_index]) {
-                    search_match(edge.get_head_node(), &stash, current_index, &var_store);
-                }
+    else if (node.get_next_edges()) { //not a nullpointer
+        current_index++;
+        for (Edge* edge: node_get_next_edges()) {
+            if (edge.get_label() == var_store.path[current_index]) {
+                search_match(edge.get_head_node(), &stash, current_index, &var_store);
+                //response only matters if we want to exit quickly (return_nodes = false)
+                if *var_store.exit return;
             }
         }
+        return;
     }
+    else return; //no matches
 }
+
 
 
 // save variables we will use over and over again instead of sending them back and forth between functions. Place in namespace
 struct varStorage{
     //!!innhold av found_patterns må matche med stash som currently er deque
-    std::vector<std::vector<Node*>> found_patterns; //start and end nodes connected by both p and q in pairs
+    std::vector<std::vector<Node*>>* found_patterns; //start and end nodes connected by both p and q in pairs
     const int start_index; //index from sequence of our starting point
-    Edge* start_edge; //instead of node, whwere the traversing starts.
+    Edge* start_edge; //instead of node, where the traversing starts.
 
     char path_letter; // p or q
     path path; //actual sequence corresponding to p or q (the one we are searching trough atm). Could point to this->p or this->q...
@@ -292,12 +316,15 @@ struct varStorage{
             this->path_letter == "p";
             this->path = this->p;
         }
+        //try:
+        //this->path_letter = (this->path_letter == "p") ? "q" : "p";
+        //this-> path = (this->path_letter=="p") ? this->p : this->q;
 
     }
-    // would need a copy constructor to transfer the initial parameters!
+    // would need a copy constructor to transfer the initial parameters!? no, do not think so
 
     const bool return_nodes; // user input
-    bool match = false; //change to true if p-q match found AND return_nodes=false. Then efficiently exit all recursion
+    bool* exit = false; //change to true if p-q match found AND return_nodes=false. Then efficiently exit all recursion. "global"
 };
 
 
@@ -325,10 +352,17 @@ type T find_pattern(const path p, const path q, bool return_nodes=false) {
     STEP 3. Start søk ------------------
     */
     // Create instance of struct, fill in values and send as reference
-    varStorage var_store; //each rank has it's pwn
+    varStorage var_store; //each rank has it's own
+
+    //Make global variables for each rank
+    std::vector<std::vector<Node*>> found_patterns;
+    bool exit = false;
+    var_store.found_patterns = &found_patterns;
+    var_store.exit = &exit;
+
+
     var_store.start_index = start_path_index;
     var_store.path_letter = path_letter;
-
     var_store.p = p;
     var_store.q = q;
     var_store.path = (path_letter == "p") ? p : q; //short hand for if-else https://www.w3schools.com/cpp/cpp_conditions_shorthand.asp
@@ -357,10 +391,18 @@ type T find_pattern(const path p, const path q, bool return_nodes=false) {
         //using recursive function to iterate trough graph until patterns are found or not found
         iterate_forward(edge, stash, current_index, &var_store);
     }
-    //----HERE: found_patterns now contain all found patterns of either p or q
-
-
+    //----HERE: found_patterns now contain either one set of nodes or several or none at all
+    //if *var_store.found_patterns do not have any containment:
+    //   return ('NO PATTERNS AVAILABLE')
+    else if (return_nodes == false) {
+        //print('YES, pattern exists')
     }
+    else {
+        //print('all found patterns: label node pairs in *var_store.found_patterns;)
+    }
+
+
+}
 
 }
 
