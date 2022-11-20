@@ -208,136 +208,124 @@ namespace {
 }
 
 
-void iterate_forward(Edge* edge, std::deque<string> stash, int current_index, &params) { //COPY stash and index
+void iterate_forward(Edge* edge, std::vector<Node*> stash, int current_index, &params) { //COPY stash and index
     /// iterate forward in the graph
 
+    if (current_index == params.path.size()-1) {/*at the end of the path -> start iterating backwards unless the whole pattern is found ->end iterations*/
+        stash.push_back(edge.get_head_node()); //at the end
 
-    if (current_index == params.path.size()-1) stash.push_back(edge.get_head_node()); //at the end
-
-    //might remove entirely? change completely
-    if (stash.size() == 2) {
-           // params.found_patterns.push_back(stash);  // a whole path is found! ONLY P
-                                                        //might change if stash is not a deque...
-            //HERE: Start searching for matching q!
+        if (stash.size() == 2) {//Start searching for matching path!
             current_index = 0;
-            Parameters copy_params = params; //SHALLOW copy, does this work as wanted?
+            Parameters copy_params = params; //SHALLOW copy, does this work as wanted? (we want the same poitners)
             copy_params.switch_parameters();
-            search_match(stash[0], &stash, current_index, &copy_params);
-            if *params.exit return; //THIS IS NOT UPDATED YET exit is still always false...
-            //and return true if params.return_nodes = false and both p and q is found;
+            search_match(stash[0], stash, current_index, copy_params); //When this continues/returns we are done with this iteration
+        }
+
+        else {/*at the end of the path -> start iterating backwards*/
+            int current_index = params.start_index; //update current_index as we are about to move backwards
+            iterate_backward(params.start_edge, stash, current_index, params)
+        }
+
+        if *params.exit return; //if poitner params->exit return;
+
     }
 
-    //do not continue to iterate if at the end of a path (fully finished path). return to the previous "recursion"
-    else if (current_index == params.path.size()-1) {/*at the end of the path -> start iterating backwards...*/
-            current_index = params.start_index; //update current_index as we are about to move backwards
-            iterate_backward(params.start_edge, stash, int current_index, &params) } //<??start_index will become current_index
-            if *params.exit return;
-
-    else if (edge.get_head_node().get_next_edges()) {//make sure it does not point to a nullpointer
+    else if !(edge.get_head_node().get_next_edges().empty()) {//make sure it is not empty
 
         current_index++; //must handle the special case of the first iteration?
         for (Edge* edge: edge.get_head_node().get_next_edges()) {
 
             if (edge.get_label() == params.path[current_index]) { //a match is found. Double check. what is index now?
-                iterate_forward(edge, stash, current_index);
-                if *params.exit return;
-
-            }
-        }
-    }
-    else return;
-}
-
-
-
-void iterate_backward(Edge* edge, std::deque<string> stash, int current_index, &params) {
-    //we do not go here if we started at index 0
-
-    if (current_index == 0) {
-        stash.push_front(edge.get_tail_node()); //order matters. stash must be (start, end)
-        //params.found_patterns.push_back(stash); //a whole path found! ONLY p
-         //HERE: Start searching for matching q!
-
-         //current index is already set to 0, do not need to update it
-         Parameters copy_params = params; //SHALLOW copy, does this work as wanted?
-         copy_params.switch_parameters();
-         search_match(stash[0], &stash, current_index, &copy_params);
-         if *params.exit return;
-
-    }
-
-    else if (edge.get_tail_node().get_prev_edges()) { // make sure it does not point to a nullpointer
-        current_index--;
-        for (Edge* edge: edge.get_tail_node().get_prev_edges()) {
-
-            if (edge.get_label() == path[current_index]) { //if match!
-
-                //can move this:
-                //if current_index == 0; /...
-                //else: iterate_backward
-
-                iterate_backward(edge, stash, current_index, &params);
+                iterate_forward(edge, stash, current_index, params);
                 if *params.exit return;
             }
-
         }
         return;
     }
     else return;
 }
 
+
+
+void iterate_backward(Edge* edge, std::vector<Node*> stash, int current_index, &params) {
+    //we do not go here if we started at index 0
+
+    if (current_index == 0) {
+        stash.insert(stash.begin(), edge.get_tail_node()); //order matters. stash must be (start, end)
+        //Start searching for matching path!
+
+         Parameters copy_params = params; //SHALLOW copy, does this work as wanted?
+         copy_params.switch_parameters();
+         search_match(stash[0], stash, current_index, copy_params); //current index is already set to 0, do not need to update it
+         if *params.exit return;
+    }
+
+    else if !(edge.get_tail_node().get_prev_edges().empty()) { // make sure it is not empty
+        current_index--;
+
+        for (Edge* edge: edge.get_tail_node().get_prev_edges()) {
+            if (edge.get_label() == path[current_index]) { //if match!
+                iterate_backward(edge, stash, current_index, params);
+                if *params.exit return;
+            }
+        }
+        return;
+    }
+    else return;
+
+
+
+}
+
 //STASH must contain nodes in the order: (start, end)
-void search_match(Node* node, std::deque<string> &stash, int current_index, &params) { //match node is the last node in the previously found pattern
+void search_match(Node* node, std::vector<Node*> &stash, int current_index, &params) { //?node is the last node in the previously found pattern
 
     if (current_index == params.path.size()-1) {//found an entire path, but does the ending point match?
 
         if (node == stash.back()) { //.back() has O(1) https://www.geeksforgeeks.org/vectorfront-vectorback-c-stl/
             //obs! can we compare the pointers? or do we have to compare the labels...
-            params.found_patterns->push_back(stash);
+            params.found_patterns.push_back(stash);
 
-            if (params.return_nodes == false) {
-                params.exit->true //obs! make work with the current copy
+            if !(params.return_nodes) *params.exit = true; //obs! make work with the current copy. pointer solution, does this worl?
                 //..........send to rank 0? but what if only one rank...
-                //return true
-                //else return false?
-            };
-            //return true
-        } //we don't really need these returns? but the might be neccessary to exit the code quickly
-        //else return false //no match to be found
+        }
         return;
     }
 
-    else if (node.get_next_edges()) { //not a nullpointer
+    else if !(node.get_next_edges().empty()) { //not empty
         current_index++;
+
         for (Edge* edge: node_get_next_edges()) {
             if (edge.get_label() == params.path[current_index]) {
-                search_match(edge.get_head_node(), &stash, current_index, &params);
-                //response only matters if we want to exit quickly (return_nodes = false)
+                search_match(edge.get_head_node(), stash, current_index, params);
                 if *params.exit return;
             }
         }
         return;
     }
-    else return; //no matches
+    else return;
 }
 
 
 
 // save variables we will use over and over again instead of sending them back and forth between functions. Place in namespace
 struct Parameters{
-    //!!innhold av found_patterns må matche med stash som currently er deque
     std::vector<std::vector<Node*>>* found_patterns; //start and end nodes connected by both p and q in pairs
-    const int start_index; //index from sequence of our starting point
     Edge* start_edge; //instead of node, where the traversing starts.
+    const int start_index; //index from sequence of our starting point
+    const bool return_nodes; // user input
+    bool* exit = false; //change to true if p-q match found AND return_nodes=false. Then efficiently exit all recursion. "global"
 
     char path_letter; // p or q
-    path path; //actual sequence corresponding to p or q (the one we are searching trough atm). Could point to this->p or this->q...
-
-    //idea draft for finding q immediatly... would make a new instance of Parameters for each q we try to find tho....
     path p;
     path q;
+    path path; //actual sequence corresponding to p or q (the one we are searching trough atm). Could point to this->p or this->q...
 
     void switch_parameters() {
+        this->path_letter = (this->path_letter == "p") ? "q" : "p";
+        this->path = (this->path_letter=="p") ? this->p : this->q;
+
+        /*Same as
         if (this->path_letter == "p") {
             this->path_letter = "q";
             this->path = this->q;
@@ -346,15 +334,9 @@ struct Parameters{
             this->path_letter == "p";
             this->path = this->p;
         }
-        //try:
-        //this->path_letter = (this->path_letter == "p") ? "q" : "p";
-        //this-> path = (this->path_letter=="p") ? this->p : this->q;
-
+        */
     }
     // would need a copy constructor to transfer the initial parameters!? no, do not think so
-
-    const bool return_nodes; // user input
-    bool* exit = false; //change to true if p-q match found AND return_nodes=false. Then efficiently exit all recursion. "global"
 };
 
 
@@ -370,11 +352,11 @@ type T find_pattern(const path p, const path q, bool return_nodes=false) {
     params.p = p;
     params.q = q;
 
-    auto starting_points = analyse_graph(&params);
+    auto starting_points = analyse_graph(params);
     // THESE PARAMTERES SHOULD BE ADDED TO params in the analysis!!! and not returned. more clear code
     //update return value! oly return starting_points?
     if starting_points.empty() {//Somehow check if starting points is empty:
-        std::cout << "No such pattern exists in the graph."
+        std::cout << "No such pattern exists in the graph.";
         return /*No patterns found*/;
     }
 
@@ -401,11 +383,9 @@ type T find_pattern(const path p, const path q, bool return_nodes=false) {
     params.exit = &exit;
 
 
-
-    std::deque<string> stash; //current path. Will continously be made several copies. DEQUE or OWN simple IMPLEMENTATION?
-                              //stash will only contain start and end node!
-                              //CHANGE TO array of set size 2!!!
-    int current_index = start_path_index; //each recursion need it's own in it's scope
+    std::vector<Node*> stash; //will contain start and end node! Will continously be made several copies.
+                              //Might CHANGE TO array of set size 2!!!
+    int current_index = params.start_index; //each recursion need it's own in it's scope
 
 
     //SPECIAL CASE: ONLY 1 EDGE IN PATH!
@@ -414,22 +394,29 @@ type T find_pattern(const path p, const path q, bool return_nodes=false) {
     for (Edge* edge : starting_points) {
 
         params.start_edge = edge //COPY
-
-        if (params.start_index == 0) stash.push_back(edge.get_tail_node()); //if we start at the beginning
-        //recursion will handle all else cases
-
+        if (params.start_index == 0) stash.push_back(edge.get_tail_node()); //if we start at the beginning //recursion will handle all else cases
 
         //using recursive function to iterate trough graph until patterns are found or not found
-        iterate_forward(edge, stash, current_index, &params);
+        iterate_forward(edge, stash, current_index, params);
     }
-    //----HERE: found_patterns now contain either one set of nodes or several or none at all
+
+    //----SHOW RESULTS: found_patterns now contain either one set of nodes or several or none at all
     if *params.found_patterns.empty() {// do not have any containment:
+         std::cout << "No such pattern exists in the graph.";
     //   return ('NO PATTERNS AVAILABLE')
     }
-    else if (return_nodes == false) {
+    else if !(return_nodes) {
+        std::cout << "The requested pattern is found!" << std::endl;
+        std::cout << "WARNING: The returned nodes might not be the only nodes connected by these paths" <<"\n"<<
+                    "Set parameter return_nodes=true to see all connections."<<std::endl;
         //print('YES, pattern exists')
     }
     else {
+        std::cout << "The requested pattern is found! All connections found is as follows:" << "\n";
+
+        for (auto pairs: *params.found_patterns) {
+            std::cout << "Pair: " << pairs[0].get_label() << " - " << pairs[1].get_label() << std::endl;
+         }
         //print('all found patterns: label node pairs in *params.found_patterns;)
     }
 
