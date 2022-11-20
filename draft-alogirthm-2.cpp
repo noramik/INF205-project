@@ -129,23 +129,23 @@ std::vector<Edge*> Graph::analyse_graph(Parameters &params) {
 
         if (minima == p_0 || minima == q_0) start_points = analyse_path_edges(true, params, counted_instances);
         else start_points = analyse_path_edges(false, params, counted_instances);
-        if !(start_points.empty()) return start_points; // Make sure pointers is handled correctly
+        if (!start_points.empty()) return start_points; // Make sure pointers is handled correctly
     }
 
     else if (params.p[0] != params.q[0]) {
         start_points = analyse_path_edges(true, params, counted_instances);
-        if !(start_points.empty()) return start_points;
+        if (!start_points.empty()) return start_points;
     }
     else if (params.p.back() != params.q.back()) {
         start_points = analyse_path_edges(false, params, counted_instances);
-        if !(start_points.empty()) return start_points;
+        if (!start_points.empty()) return start_points;
     }
 
 
     // -----General case: lowest count and longest sequence
-    bool comp(auto a, auto b) {
+    bool comp(std::pair<std::string, int> a, std::pair<std::string, int> b) {
         return a.second < b.second
-    }
+    } //not allowed like this
     std::pair<std::string, int> minima = *min_element(counted_instances.begin(), counted_instances.end(), comp) //should return pair of (label, num_instances)
     start_points = this->get_edges[minima.first] //can we add all at once, or do we have to iterate and add one at a time?
 
