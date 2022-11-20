@@ -83,9 +83,9 @@ namespace graph
 
 	multimap get_edges() //get the multimap
 	Node* get_node_pointer_by_unique_label() (?)
+    */
+	std::vector<std::vector<Node*>> find_pattern(const std::string p[], const std::string q[], bool return_nodes=false);  //False betyr True/False answer. True betyr finn alle noder og returner med label.
 
-	find_pattern(path p, path q, return_nodes=False);  #False betyr True/False answer. True betyr finn alle noder og returner med label.
-	*/
 	~Graph();// default destructor or additional functionality for handling pointers?
 	/*
 	Copy constructor and assignement or forbid copying.
@@ -103,6 +103,9 @@ namespace graph
 	// Used unordered_map instead of map. Usually faster, i think for our use-case, an ordered map wouldn't be neccessary either way.
 	std::map<std::string, Node*> nodes; // What data stucture here? Map? Set? vector?
 	bool generate_edge_from(std::istream* source); // Implementation of this copied from directed-graph example.
+
+    struct Parameters;
+	std::vector<Edge*> analyse_graph(Parameters &params);
 	};
 
 }
