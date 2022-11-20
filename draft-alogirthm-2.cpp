@@ -19,7 +19,7 @@ namespace {
         1.2.1 if any instances == 1: Velg dette som startpunkt
         1.2.2 elif (p_1, p_n, q_1, q_m) < Et eller annet: Sjekk felles noder, bruk dette som startpunkt (evt. stopp hele koden)
         1.2.3 else velg laveste antall av forekomst i den lengste pathen */
-std::tuple<const char, const int, *std::vector<Edge*>> analyse_graph(const path &p, const path &q) {
+*std::vector<Edge*> analyse_graph(Parameters &params) {
     ///Returns : which sequence pattern to initially search for with the corresponding starting points as edge-pointers
 
     // create map with keys as edge labels and number of instances as value
@@ -35,7 +35,13 @@ std::tuple<const char, const int, *std::vector<Edge*>> analyse_graph(const path 
                 std::vector<Edge*, 1> *starting_point = new std::vector<Edge*>();  //HEAP
                 starting_point->push_back(/*this->edges[edge_label]*/);
 
-                return std::tuple<sequence_letter, start_index, starting_point>;
+                params.start_index = start_index;
+                params.path_letter = sequence_letter;
+                params.path = (params.path_letter == "p") ? params.p : params.q;
+                return starting_point;
+
+                //return std::tuple<sequence_letter, start_index, starting_point>;
+
             }
 
             // Add number of instances to the mapping
@@ -47,30 +53,34 @@ std::tuple<const char, const int, *std::vector<Edge*>> analyse_graph(const path 
 
     // Special case for starting and ending points. We do not allow this procedure if the starting/ending edge labels of p and q are equal
     //
-    const int p_0 = counted_instances[p[0]];
-    const int p_n = counted_instances[p.back()];
-    const int q_0 = counted_instances[q[0]];
-    const int q_m = counted_instances[q.back()];
+    const int p_0 = counted_instances[params.p[0]];
+    const int p_n = counted_instances[params.p.back()];
+    const int q_0 = counted_instances[params.q[0]];
+    const int q_m = counted_instances[params.q.back()];
 
-    if (p[0] != q[0] && p.back() != q.back()) {
+    if (params.p[0] != params.q[0] && params.p.back() != params.q.back()) {
         //choose start or end based on fewest appearances. Priorotize beginning (lower or equal to)
         const int minima = std::min({p_0, p_n, q_0, q_m});
 
         if (minima == p_0 || minima == q_0) {
-            std::tuple<const char, const int, *std::vector<Edge*>> start = analyse_path_edges(p[0], q[0]);
+            //std::tuple<const char, const int, *std::vector<Edge*>> start = analyse_path_edges(p[0], q[0]);
+            *std::vector<Edge*> start = analyse_path_edges(true, &params);
         }
-        else std::tuple<const char, const int, *std::vector<Edge*>> start = analyse_path_edges(p.back(), q.back());
+        else *std::vector<Edge*> start = analyse_path_edges(false, &params);
+            //std::tuple<const char, const int, *std::vector<Edge*>> start = analyse_path_edges(p.back(), q.back());
 
-        // if start[1] != nullptr: return it. Make sure pointers is handled correctly
+        // if !start.empty(): return it. Make sure pointers is handled correctly
     }
 
     else if (p[0] != q[0]) {
-            std::tuple<const char, const int, *std::vector<Edge*>> start = analyse_path_edges(p[0], q[0]);
-            // if start[1] != nullptr: return it. Make sure pointers is handled correctly
+            *std::vector<Edge*> start = analyse_path_edges(true, &params);
+            //std::tuple<const char, const int, *std::vector<Edge*>> start = analyse_path_edges(p[0], q[0]);
+            // if !start.empty(): return it. Make sure pointers is handled correctly
     }
     else if (p.back() != q.back()) {
-        std::tuple<const char, const int, *std::vector<Edge*>> start = analyse_path_edges(p.back(), q.back());
-        // if start[1] != nullptr: return it. Make sure pointers is handled correctly
+        *std::vector<Edge*> start = analyse_path_edges(false, &params);
+        //std::tuple<const char, const int, *std::vector<Edge*>> start = analyse_path_edges(p.back(), q.back());
+        // if s!start.empty(): return it. Make sure pointers is handled correctly
     }
 
 
@@ -93,28 +103,37 @@ std::tuple<const char, const int, *std::vector<Edge*>> analyse_graph(const path 
     std::vector<int>::iterator it;
     if (p.size() > q.size()) {
         it = std::find(p.begin(), p.end(), min_label);
-        if (it != p.end()) char sequence_letter = "p"; /* if found */
-        else char sequence_letter = "q";
+
+        //shorthand for the below
+        char sequence_letter = (it != p.end()) ? "p" : "q";
+        //if (it != p.end()) char sequence_letter = "p"; /* if found */
+        //else char sequence_letter = "q";
+        const int starting_index = /*FIND*/;
     }
     else {
         it = std::find(q.begin(), q.end(), min_label);
-        if (it != p.end()) char sequence_letter = "q"; /* if found */
-        else char sequence_letter = "p";
+        char sequence_letter = (it != p.end()) ? "q" : "p";
+        //if (it != p.end()) char sequence_letter = "q"; /* if found */
+        //else char sequence_letter = "p";
+        const int starting_index = /*FIND*/;
     }
-    return std::tuple<sequence_letter, starting_points>;
+    return std::tuple<sequence_letter, starting_index, starting_points>;
 
 }
 
 
 
 
-std::tuple<char, *std::vector<Edge*>> analyse_path_edges(string p_label, string q_label, const bool start) {
+*std::vector<Edge*> analyse_path_edges(const bool start, Parameters &params) {
     /// We find nodes connected to both p_label and q_label if the edge with the fewest appearances is lower than a mathematical requirement
     /// p_label and q_label are both either the first or last edges in sequence p and q.
     /// place == True if at the beginning of the sequence, False if at the end
 
     int requirement = floor (this->tot_num_edges/3) ///Must choose this math carefully. Dummy value now
+    string p_label = (start) ? params.p[0] : params.p.back(); //first element if at the start, otherwise the last element
+    string q_label = (start) ? params.q[0] : params.q.back(); //first element if at the start, otherwise the last element
 
+    // COUNTED_INSTANCES does not exist here!!, must have as an input or so....
     if (counted_instances[p_label] <= counted_instances[q_label] && counted_instances[p_label] < requirement) {
         //.... check for matching nodes
         std::vector<Edge*> *starting_points = new std::vector<Edge*>(); //HEAP
@@ -129,7 +148,7 @@ std::tuple<char, *std::vector<Edge*>> analyse_path_edges(string p_label, string 
             else { //if at the end
                 Node* node = edge_pointer.get_head_node();
                 std::vector<Edge*> potential_edges = node.get_prev_edges();
-                const int start_index = /*path p.size()-1*/ //Input?
+                const int start_index = /*path p.size()-1*/ //Input? //params.p.size()-1
             }
 
             std::vector<int>::iterator it;
@@ -140,7 +159,12 @@ std::tuple<char, *std::vector<Edge*>> analyse_path_edges(string p_label, string 
 
         }
         char sequence_letter = /*p or q: find which sequence is the largest*/;
-        return std::tuple<sequence_letter, start_index, starting_points>;
+
+        params.start_index = start_index;
+        params.path_letter = sequence_letter;
+        params.path = (params.path_letter == "p") ? p : q;
+
+        return starting_points;
     }
     else if (counted_instances[q_label]) < requirement) {
         //...check for matching nodes DUPLICATE (create another function?)
@@ -166,51 +190,57 @@ std::tuple<char, *std::vector<Edge*>> analyse_path_edges(string p_label, string 
 
         }
         char sequence_letter = /* find which sequence is the largest*/;
-        return std::tuple<sequence_letter, start_index, starting_points>;
+
+        params.start_index = start_index;
+        params.path_letter = sequence_letter;
+        params.path = (params.path_letter == "p") ? p : q;
+
+        return starting_points;
         // DUPLICATE END
     }
     else { // we don't want to do anything, but need to return for consistency?
-        char sequence_letter = ""; //empty
+        //char sequence_letter = ""; //empty
         std::vector<Edge*> *starting_points = nullptr;
+        //params.path_letter = sequence_letter;
 
-        return std::tuple<"", 0, starting_points>;
+        return starting_points;
     }
 }
 
 
-void iterate_forward(Edge* edge, std::deque<string> stash, int current_index, &var_store) { //COPY stash and index
+void iterate_forward(Edge* edge, std::deque<string> stash, int current_index, &params) { //COPY stash and index
     /// iterate forward in the graph
 
 
-    if (current_index == var_store.path.size()-1) stash.push_back(edge.get_head_node()); //at the end
+    if (current_index == params.path.size()-1) stash.push_back(edge.get_head_node()); //at the end
 
     //might remove entirely? change completely
     if (stash.size() == 2) {
-           // var_store.found_patterns.push_back(stash);  // a whole path is found! ONLY P
+           // params.found_patterns.push_back(stash);  // a whole path is found! ONLY P
                                                         //might change if stash is not a deque...
             //HERE: Start searching for matching q!
             current_index = 0;
-            varStorage copy_var_store = var_store; //SHALLOW copy, does this work as wanted?
-            copy_var_store.switch_parameters();
-            search_match(stash[0], &stash, current_index, &copy_var_store);
-            if *var_store.exit return; //THIS IS NOT UPDATED YET exit is still always false...
-            //and return true if var_store.return_nodes = false and both p and q is found;
+            Parameters copy_params = params; //SHALLOW copy, does this work as wanted?
+            copy_params.switch_parameters();
+            search_match(stash[0], &stash, current_index, &copy_params);
+            if *params.exit return; //THIS IS NOT UPDATED YET exit is still always false...
+            //and return true if params.return_nodes = false and both p and q is found;
     }
 
     //do not continue to iterate if at the end of a path (fully finished path). return to the previous "recursion"
-    else if (current_index == var_store.path.size()-1) {/*at the end of the path -> start iterating backwards...*/
-            current_index = var_store.start_index; //update current_index as we are about to move backwards
-            iterate_backward(var_store.start_edge, stash, int current_index, &var_store) } //<??start_index will become current_index
-            if *var_store.exit return;
+    else if (current_index == params.path.size()-1) {/*at the end of the path -> start iterating backwards...*/
+            current_index = params.start_index; //update current_index as we are about to move backwards
+            iterate_backward(params.start_edge, stash, int current_index, &params) } //<??start_index will become current_index
+            if *params.exit return;
 
     else if (edge.get_head_node().get_next_edges()) {//make sure it does not point to a nullpointer
 
         current_index++; //must handle the special case of the first iteration?
         for (Edge* edge: edge.get_head_node().get_next_edges()) {
 
-            if (edge.get_label() == var_store.path[current_index]) { //a match is found. Double check. what is index now?
+            if (edge.get_label() == params.path[current_index]) { //a match is found. Double check. what is index now?
                 iterate_forward(edge, stash, current_index);
-                if *var_store.exit return;
+                if *params.exit return;
 
             }
         }
@@ -220,19 +250,19 @@ void iterate_forward(Edge* edge, std::deque<string> stash, int current_index, &v
 
 
 
-void iterate_backward(Edge* edge, std::deque<string> stash, int current_index, &var_store) {
+void iterate_backward(Edge* edge, std::deque<string> stash, int current_index, &params) {
     //we do not go here if we started at index 0
 
     if (current_index == 0) {
         stash.push_front(edge.get_tail_node()); //order matters. stash must be (start, end)
-        //var_store.found_patterns.push_back(stash); //a whole path found! ONLY p
+        //params.found_patterns.push_back(stash); //a whole path found! ONLY p
          //HERE: Start searching for matching q!
 
          //current index is already set to 0, do not need to update it
-         varStorage copy_var_store = var_store; //SHALLOW copy, does this work as wanted?
-         copy_var_store.switch_parameters();
-         search_match(stash[0], &stash, current_index, &copy_var_store);
-         if *var_store.exit return;
+         Parameters copy_params = params; //SHALLOW copy, does this work as wanted?
+         copy_params.switch_parameters();
+         search_match(stash[0], &stash, current_index, &copy_params);
+         if *params.exit return;
 
     }
 
@@ -246,8 +276,8 @@ void iterate_backward(Edge* edge, std::deque<string> stash, int current_index, &
                 //if current_index == 0; /...
                 //else: iterate_backward
 
-                iterate_backward(edge, stash, current_index, &var_store);
-                if *var_store.exit return;
+                iterate_backward(edge, stash, current_index, &params);
+                if *params.exit return;
             }
 
         }
@@ -257,16 +287,16 @@ void iterate_backward(Edge* edge, std::deque<string> stash, int current_index, &
 }
 
 //STASH must contain nodes in the order: (start, end)
-void search_match(Node* node, std::deque<string> &stash, int current_index, &var_store) { //match node is the last node in the previously found pattern
+void search_match(Node* node, std::deque<string> &stash, int current_index, &params) { //match node is the last node in the previously found pattern
 
-    if (current_index == var_store.path.size()-1) {//found an entire path, but does the ending point match?
+    if (current_index == params.path.size()-1) {//found an entire path, but does the ending point match?
 
         if (node == stash.back()) { //.back() has O(1) https://www.geeksforgeeks.org/vectorfront-vectorback-c-stl/
             //obs! can we compare the pointers? or do we have to compare the labels...
-            var_store.found_patterns->push_back(stash);
+            params.found_patterns->push_back(stash);
 
-            if (var_store.return_nodes == false) {
-                var_store.exit->true //obs! make work with the current copy
+            if (params.return_nodes == false) {
+                params.exit->true //obs! make work with the current copy
                 //..........send to rank 0? but what if only one rank...
                 //return true
                 //else return false?
@@ -280,10 +310,10 @@ void search_match(Node* node, std::deque<string> &stash, int current_index, &var
     else if (node.get_next_edges()) { //not a nullpointer
         current_index++;
         for (Edge* edge: node_get_next_edges()) {
-            if (edge.get_label() == var_store.path[current_index]) {
-                search_match(edge.get_head_node(), &stash, current_index, &var_store);
+            if (edge.get_label() == params.path[current_index]) {
+                search_match(edge.get_head_node(), &stash, current_index, &params);
                 //response only matters if we want to exit quickly (return_nodes = false)
-                if *var_store.exit return;
+                if *params.exit return;
             }
         }
         return;
@@ -294,7 +324,7 @@ void search_match(Node* node, std::deque<string> &stash, int current_index, &var
 
 
 // save variables we will use over and over again instead of sending them back and forth between functions. Place in namespace
-struct varStorage{
+struct Parameters{
     //!!innhold av found_patterns må matche med stash som currently er deque
     std::vector<std::vector<Node*>>* found_patterns; //start and end nodes connected by both p and q in pairs
     const int start_index; //index from sequence of our starting point
@@ -303,7 +333,7 @@ struct varStorage{
     char path_letter; // p or q
     path path; //actual sequence corresponding to p or q (the one we are searching trough atm). Could point to this->p or this->q...
 
-    //idea draft for finding q immediatly... would make a new instance of varStorage for each q we try to find tho....
+    //idea draft for finding q immediatly... would make a new instance of Parameters for each q we try to find tho....
     path p;
     path q;
 
@@ -334,10 +364,20 @@ namespace graph{
 
 type T find_pattern(const path p, const path q, bool return_nodes=false) {
 
+    // initialize parameters
+    Parameters params; //each rank will have its' own.. important! not shared memory
+    params.return_nodes = return_nodes;
+    params.p = p;
+    params.q = q;
 
-    auto [path_letter, start_path_index, starting_points] = analyse_graph(const path &p, const path &q);
-    if !starting_points; //Somehow check if starting points is empty:
+    auto starting_points = analyse_graph(&params);
+    // THESE PARAMTERES SHOULD BE ADDED TO params in the analysis!!! and not returned. more clear code
+    //update return value! oly return starting_points?
+    if starting_points.empty() {//Somehow check if starting points is empty:
+        std::cout << "No such pattern exists in the graph."
         return /*No patterns found*/;
+    }
+
 
 
 /*
@@ -345,29 +385,20 @@ type T find_pattern(const path p, const path q, bool return_nodes=false) {
 
 
     */
-    delete[] starting_points //IMPORTANT!!!
+    delete[] starting_points //IMPORTANT!!! or maybe we do not use the heap at all....
     /*
 
 
     STEP 3. Start søk ------------------
     */
     // Create instance of struct, fill in values and send as reference
-    varStorage var_store; //each rank has it's own
+    //Parameters params; //each rank has it's own
 
-    //Make global variables for each rank
+    //Make global variables for each rank. can this be made before different ranks are running???
     std::vector<std::vector<Node*>> found_patterns;
     bool exit = false;
-    var_store.found_patterns = &found_patterns;
-    var_store.exit = &exit;
-
-
-    var_store.start_index = start_path_index;
-    var_store.path_letter = path_letter;
-    var_store.p = p;
-    var_store.q = q;
-    var_store.path = (path_letter == "p") ? p : q; //short hand for if-else https://www.w3schools.com/cpp/cpp_conditions_shorthand.asp
-    var_store.return_nodes = return_nodes;
-
+    params.found_patterns = &found_patterns;
+    params.exit = &exit;
 
 
 
@@ -382,23 +413,24 @@ type T find_pattern(const path p, const path q, bool return_nodes=false) {
     // Find all matching patterns of path_letter (p or q)
     for (Edge* edge : starting_points) {
 
-        var_store.start_edge = edge //COPY
+        params.start_edge = edge //COPY
 
-        if (var_store.start_index == 0) stash.push_back(edge.get_tail_node()); //if we start at the beginning
+        if (params.start_index == 0) stash.push_back(edge.get_tail_node()); //if we start at the beginning
         //recursion will handle all else cases
 
 
         //using recursive function to iterate trough graph until patterns are found or not found
-        iterate_forward(edge, stash, current_index, &var_store);
+        iterate_forward(edge, stash, current_index, &params);
     }
     //----HERE: found_patterns now contain either one set of nodes or several or none at all
-    //if *var_store.found_patterns do not have any containment:
+    if *params.found_patterns.empty() {// do not have any containment:
     //   return ('NO PATTERNS AVAILABLE')
+    }
     else if (return_nodes == false) {
         //print('YES, pattern exists')
     }
     else {
-        //print('all found patterns: label node pairs in *var_store.found_patterns;)
+        //print('all found patterns: label node pairs in *params.found_patterns;)
     }
 
 
