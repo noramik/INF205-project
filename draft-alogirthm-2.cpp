@@ -5,14 +5,16 @@
 #include <vector>
 #include <iterator>
 #include <set>
+#include <string>
+
 //#include <unordered_map>
 
 #include "graph.h"
-
+using namespace graph;
 
 //Helper method, only used by this file?
 // Alternatively. Have in a separate file potentially with namespace graph or smoething else like analyze
-namespace {
+
 
 
     //STEP 1: ANALYSE ----------------
@@ -27,18 +29,51 @@ namespace {
         1.2.1 if any instances == 1: Velg dette som startpunkt
         1.2.2 elif (p_1, p_n, q_1, q_m) < Et eller annet: Sjekk felles noder, bruk dette som startpunkt (evt. stopp hele koden)
         1.2.3 else velg laveste antall av forekomst i den lengste pathen */
-std::vector<Edge*> analyse_graph(Parameters &params) {
+
+
+// save variables we will use over and over again instead of sending them back and forth between functions. Place in namespace
+struct Graph::Parameters{
+    std::vector<std::vector<Node*>>* found_patterns; //start and end nodes connected by both p and q in pairs
+    Edge* start_edge; //instead of node, where the traversing starts.
+    const int start_index; //index from sequence of our starting point
+    const bool return_nodes; // user input
+    bool* exit = &false; //change to true if p-q match found AND return_nodes=false. Then efficiently exit all recursion. "global"
+
+    char path_letter; // p or q
+    const std::string p[];
+    const std::string q[];
+    std::string path[]; //actual sequence corresponding to p or q (the one we are searching trough atm). Could point to this->p or this->q...
+
+    void switch_parameters() {
+        this->path_letter = (this->path_letter == "p") ? "q" : "p";
+        this->path = (this->path_letter=="p") ? this->p : this->q;
+
+        /*Same as
+        if (this->path_letter == "p") {
+            this->path_letter = "q";
+            this->path = this->q;
+        }
+        else {
+            this->path_letter == "p";
+            this->path = this->p;
+        }
+        */
+    }
+    // would need a copy constructor to transfer the initial parameters!? no, do not think so
+};
+
+std::vector<Edge*> Graph::analyse_graph(Parameters &params) {
     ///Returns : starting points. structure params will hold the rest of the information (which sequence, index ...)
     std::vector<Edge*> start_points;
 
     // create map with keys as edge labels and number of instances as value
-    std::map<string,int> counted_instances;
+    std::map<std::string,int> counted_instances;
 
     // Extract all unique labels. THIS PART IS NOT NECCESSARY TO REPEAT. Add as a part of graph pulic???
     std::set<int> unique_labels;
     std::merge(params.p.begin(), params.p.end(),
                 params.q.begin(), params.q.end(),
-                std::inserter(iter, iter.begin()));
+                std::inserter(unique_labels, unique_labels.begin()));
 
 
     for (auto edge_label: unique_labels) {
@@ -48,11 +83,11 @@ std::vector<Edge*> analyse_graph(Parameters &params) {
         if (num_instances == 1) {/* find which sequence this label is in (p or q), prioritize the longest one*/
 
             //duplicated later
-            const char sequence_letter; /* find which sequence this label is in (p or q), start searching in the longest one*/
+            char sequence_letter; /* find which sequence this label is in (p or q), start searching in the longest one*/
             const int start_index; /*the index in the path for the starting point*/
 
-            auto it_p = find(params.p.begin(), params.p.end(), edge_label);
-            auto it_q = find(params.q.begin(), params.q.end(), edge_label);
+            auto it_p = std::find(params.p.begin(), params.p.end(), edge_label);
+            auto it_q = std::find(params.q.begin(), params.q.end(), edge_label);
 
             if (params.p.size() >= params.q.size() && it_p != params.p.end()) {
                 sequence_letter = "p";
@@ -111,15 +146,15 @@ std::vector<Edge*> analyse_graph(Parameters &params) {
     bool comp(auto a, auto b) {
         return a.second < b.second
     }
-    std::pair<string, int> minima = *min_element(counted_instances.begin(), counted_instances.end(), comp) //should return pair of (label, num_instances)
+    std::pair<std::string, int> minima = *min_element(counted_instances.begin(), counted_instances.end(), comp) //should return pair of (label, num_instances)
     start_points = this->get_edges[minima.first] //can we add all at once, or do we have to iterate and add one at a time?
 
     // Find the longest sequence that holds the min_label + the index //DUPLICATE (expect for start above...)
-    const char sequence_letter; /* find which sequence this label is in (p or q), start searching in the longest one*/
+    char sequence_letter; /* find which sequence this label is in (p or q), start searching in the longest one*/
     const int start_index; /*the index in the path for the starting point*/
 
-    auto it_p = find(params.p.begin(), params.p.end(), minima.first);
-    auto it_q = find(params.q.begin(), params.q.end(), minima.first);
+    auto it_p = std::find(params.p.begin(), params.p.end(), minima.first);
+    auto it_q = std::find(params.q.begin(), params.q.end(), minima.first);
 
     if (params.p.size() >= params.q.size() && it_p != params.p.end()) {
         sequence_letter = "p";
@@ -143,14 +178,14 @@ std::vector<Edge*> analyse_graph(Parameters &params) {
 
 
 
-std::vector<Edge*> analyse_path_edges(const bool start, Parameters &params, std::map<string,int> &counted_instances) {
+std::vector<Edge*> analyse_path_edges(const bool start, Parameters &params, std::map<std::string,int> &counted_instances) {
     /// We find nodes connected to both p_label and q_label if the edge with the fewest appearances is lower than a mathematical requirement
     /// p_label and q_label are both either the first or last edges in sequence p and q.
     /// place == True if at the beginning of the sequence, False if at the end
 
     int requirement = floor (this->tot_num_edges/3) ///Must choose this math carefully. Dummy value now
-    string p_label = (start) ? params.p[0] : params.p.back(); //first element if at the start, otherwise the last element
-    string q_label = (start) ? params.q[0] : params.q.back(); //first element if at the start, otherwise the last element
+    std::string p_label = (start) ? params.p[0] : params.p.back(); //first element if at the start, otherwise the last element
+    std::string q_label = (start) ? params.q[0] : params.q.back(); //first element if at the start, otherwise the last element
     std::vector<Edge*> start_points; //return vector
 
     if (counted_instances[p_label] <= counted_instances[q_label] && counted_instances[p_label] < requirement) {
@@ -318,43 +353,9 @@ void search_match(Node* node, std::vector<Node*> &stash, int current_index, &par
 
 
 
-// save variables we will use over and over again instead of sending them back and forth between functions. Place in namespace
-struct Parameters{
-    std::vector<std::vector<Node*>>* found_patterns; //start and end nodes connected by both p and q in pairs
-    Edge* start_edge; //instead of node, where the traversing starts.
-    const int start_index; //index from sequence of our starting point
-    const bool return_nodes; // user input
-    bool* exit = false; //change to true if p-q match found AND return_nodes=false. Then efficiently exit all recursion. "global"
-
-    char path_letter; // p or q
-    const string p[];
-    const string q[];
-    path path; //actual sequence corresponding to p or q (the one we are searching trough atm). Could point to this->p or this->q...
-
-    void switch_parameters() {
-        this->path_letter = (this->path_letter == "p") ? "q" : "p";
-        this->path = (this->path_letter=="p") ? this->p : this->q;
-
-        /*Same as
-        if (this->path_letter == "p") {
-            this->path_letter = "q";
-            this->path = this->q;
-        }
-        else {
-            this->path_letter == "p";
-            this->path = this->p;
-        }
-        */
-    }
-    // would need a copy constructor to transfer the initial parameters!? no, do not think so
-};
 
 
-} //end namespace
-
-namespace graph{
-
-std::vector<std::vector<Node*>> find_pattern(const string p[], const string q[], bool return_nodes=false) {
+std::vector<std::vector<Node*>> Graph::find_pattern(const std::string p[], const std::string q[], bool return_nodes=false) {
 
     // initialize parameters
     Parameters params; //each rank will have its' own.. important! not shared memory
@@ -433,5 +434,5 @@ std::vector<std::vector<Node*>> find_pattern(const string p[], const string q[],
 
 }
 
-}
+
 
