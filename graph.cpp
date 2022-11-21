@@ -85,7 +85,7 @@ using namespace graph;
 		   for (auto iter : this->nodes)
 			   {
 				   Node* node = iter.second;
-				   delete *node; // Not sure if this works or not, but at least no error messages. Does this actually destroy the node itself or just the pointer to it?
+				   delete node; // Not sure if this works or not, but at least no error messages. Does this actually destroy the node itself or just the pointer to it?
 			   }
 		   this->nodes.clear(); // Not sure if this is needed, clears the whole map, both key and val.
 
@@ -144,13 +144,14 @@ using namespace graph;
 	{
 		for (auto it = this->edges.begin(); it != this->edges.end(); it++)
 		{
-			*target << it->first << "\n";
-			/*
-			for (auto edge_it = it->second.begin(); edge_it != it->second.end(); edge_it++)
+			std::vector<Edge*> edge_vec = it->second;
+
+			for (auto edge_it = edge_vec.begin(); edge_it != edge_vec.end(); edge_it++)
 			{
-				*target << edge_it->get_head_node()->get_label() << "\t" << it->first << "\t" << *edge_it->get_tail_node()->get_label() <<"\n";
+				Edge edge_obj = **edge_it;
+				*target << "<" << edge_obj.get_head_node()->get_label() << ">" << "\t" << "<" << it->first << ">" <<  "\t" << "<" << edge_obj.get_tail_node()->get_label()<< ">"  <<"\n";
 			}
-			*/
+
 		}
 	}
 	 //I/O stream operator overloading for Graph
