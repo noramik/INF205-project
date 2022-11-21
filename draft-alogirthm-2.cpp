@@ -35,32 +35,38 @@ using namespace graph;
 struct Graph::Parameters{
     std::vector<std::vector<Node*>>* found_patterns; //start and end nodes connected by both p and q in pairs
     Edge* start_edge; //instead of node, where the traversing starts.
-    const int start_index; //index from sequence of our starting point
+    int start_index; //index from sequence of our starting point. BETTER A CONSTANT. but this creates errors...
     const bool return_nodes; // user input
-    bool* exit = &false; //change to true if p-q match found AND return_nodes=false. Then efficiently exit all recursion. "global"
+    bool* exit; //change to true if p-q match found AND return_nodes=false. Then efficiently exit all recursion. "global"
 
     char path_letter; // p or q
-    const std::string p[];
-    const std::string q[];
+    /*
+    std::string *p;
+    std::string *q;
     std::string path[]; //actual sequence corresponding to p or q (the one we are searching trough atm). Could point to this->p or this->q...
+    */
+    std::vector<std::string> p;
+    std::vector<std::string> q;
+    std::vector<std::string> path;
 
     void switch_parameters() {
-        this->path_letter = (this->path_letter == "p") ? "q" : "p";
-        this->path = (this->path_letter=="p") ? this->p : this->q;
+        this->path_letter = (this->path_letter == 'p') ? 'q' : 'p'; //single quotes because char and not string
+        this->path = (this->path_letter=='p') ? this->p : this->q;
 
         /*Same as
-        if (this->path_letter == "p") {
-            this->path_letter = "q";
+        if (this->path_letter == 'p') {
+            this->path_letter = 'q';
             this->path = this->q;
         }
         else {
-            this->path_letter == "p";
+            this->path_letter == 'p';
             this->path = this->p;
         }
         */
     }
     // would need a copy constructor to transfer the initial parameters!? no, do not think so
 };
+
 
 std::vector<Edge*> Graph::analyse_graph(Parameters &params) {
     ///Returns : starting points. structure params will hold the rest of the information (which sequence, index ...)
@@ -70,44 +76,44 @@ std::vector<Edge*> Graph::analyse_graph(Parameters &params) {
     std::map<std::string,int> counted_instances;
 
     // Extract all unique labels. THIS PART IS NOT NECCESSARY TO REPEAT. Add as a part of graph pulic???
-    std::set<int> unique_labels;
+    std::set<std::string> unique_labels;
     std::merge(params.p.begin(), params.p.end(),
                 params.q.begin(), params.q.end(),
                 std::inserter(unique_labels, unique_labels.begin()));
 
 
     for (auto edge_label: unique_labels) {
-        int num_instances = this->get_edges[edge_label].size();/*length of list belonging to map edges in graph*/;
+        int num_instances = this->get_edges().at(edge_label).size();/*length of list belonging to map edges in graph*/; //at because we KNOW this will be here
 
         // Special case; If we have any unique edges, we choose the first appearance and stop the analysis
         if (num_instances == 1) {/* find which sequence this label is in (p or q), prioritize the longest one*/
 
             //duplicated later
             char sequence_letter; /* find which sequence this label is in (p or q), start searching in the longest one*/
-            const int start_index; /*the index in the path for the starting point*/
+            int start_index; /*the index in the path for the starting point*/ //WOULD PREFER THIS TO BE A CONSTANT
 
             auto it_p = std::find(params.p.begin(), params.p.end(), edge_label);
             auto it_q = std::find(params.q.begin(), params.q.end(), edge_label);
 
             if (params.p.size() >= params.q.size() && it_p != params.p.end()) {
-                sequence_letter = "p";
+                sequence_letter = 'p';
                 start_index = it_p - params.p.begin(); // Code for finding index!
             }
             else if (params.q.size() >= params.p.size() && it_q != params.q.end()) {
-                sequence_letter = "q";
+                sequence_letter = 'q';
                 start_index = it_q - params.q.begin(); // Code for finding index!
             }
             else {
-                sequence_letter = (it_p != params.p.end()) ? "p": "q";
+                sequence_letter = (it_p != params.p.end()) ? 'p': 'q';
                 start_index = (it_p != params.p.end()) ? (it_p - params.p.begin()) : (it_q - params.q.begin());
             }
 
-            start_points.push_back(this->get_edges[edge_label]);
+            start_points = this->get_edges().at(edge_label);
 
             params.start_index = start_index;
             params.path_letter = sequence_letter;
-            params.path = (params.path_letter == "p") ? params.p : params.q;
-            return start_point;
+            params.path = (params.path_letter == 'p') ? params.p : params.q;
+            return start_points;
         }
 
         // Add number of instances to the mapping
@@ -157,21 +163,21 @@ std::vector<Edge*> Graph::analyse_graph(Parameters &params) {
     auto it_q = std::find(params.q.begin(), params.q.end(), minima.first);
 
     if (params.p.size() >= params.q.size() && it_p != params.p.end()) {
-        sequence_letter = "p";
+        sequence_letter = 'p';
         start_index = it_p - params.p.begin(); // Code for finding index!
     }
     else if (params.q.size() >= params.p.size() && it_q != params.q.end()) {
-        sequence_letter = "q";
+        sequence_letter = 'q';
         start_index = it_q - params.q.begin(); // Code for finding index!
     }
     else {
-        sequence_letter = (it_p != params.p.end()) ? "p": "q";
+        sequence_letter = (it_p != params.p.end()) ? 'p': 'q';
         start_index = (it_p != params.p.end()) ? (it_p - params.p.begin()) : (it_q - params.q.begin());
     }
 
     params.start_index = start_index;
     params.path_letter = sequence_letter;
-    params.path = (params.path_letter == "p") ? params.p : params.q;
+    params.path = (params.path_letter == 'p') ? params.p : params.q;
     return start_points;
 };
 
@@ -191,8 +197,8 @@ std::vector<Edge*> analyse_path_edges(const bool start, Parameters &params, std:
     if (counted_instances[p_label] <= counted_instances[q_label] && counted_instances[p_label] < requirement) {
         //.... check for matching nodes
 
-        params.path_letter = (params.p.size()>= params.q.size()) ? "p" : "q"; /*p or q: find which sequence is the largest*/
-        params.path = (params.path_letter == "p") ? p : q;
+        params.path_letter = (params.p.size()>= params.q.size()) ? 'p' : 'q'; /*p or q: find which sequence is the largest*/
+        params.path = (params.path_letter == 'p') ? params.p : params.q;
         const int start_index;
 
         for (Edge* edge_pointer : this->get_edges[p_label]) {
@@ -222,8 +228,8 @@ std::vector<Edge*> analyse_path_edges(const bool start, Parameters &params, std:
     else if (counted_instances[q_label]) < requirement) {
         //...check for matching nodes DUPLICATE (create another function?)
 
-        params.path_letter = (params.p.size()>= params.q.size()) ? "p" : "q"; /*p or q: find which sequence is the largest*/
-        params.path = (params.path_letter == "p") ? p : q;
+        params.path_letter = (params.p.size()>= params.q.size()) ? 'p' : 'q'; /*p or q: find which sequence is the largest*/
+        params.path = (params.path_letter == 'p') ? params.p : params.q;
         const int start_index;
 
         for (Edge* edge_pointer : this->get_edges[q_label]) {
@@ -355,7 +361,7 @@ void search_match(Node* node, std::vector<Node*> &stash, int current_index, &par
 
 
 
-std::vector<std::vector<Node*>> Graph::find_pattern(const std::string p[], const std::string q[], bool return_nodes=false) {
+std::vector<std::vector<Node*>> Graph::find_pattern(std::string p[], std::string q[], bool return_nodes=false) {
 
     // initialize parameters
     Parameters params; //each rank will have its' own.. important! not shared memory
