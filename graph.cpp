@@ -140,6 +140,9 @@ using namespace graph;
 	   return true;
 	}
 
+	/*
+	 * Prints out graph in same format at input file.
+	 */
 	void Graph::print_graph(std::ostream* target)
 	{
 		for (auto it = this->edges.begin(); it != this->edges.end(); it++)
@@ -148,7 +151,7 @@ using namespace graph;
 
 			for (auto edge_it = edge_vec.begin(); edge_it != edge_vec.end(); edge_it++)
 			{
-				Edge edge_obj = **edge_it;
+				Edge edge_obj = **edge_it; // The edge object
 				*target << "<" << edge_obj.get_head_node()->get_label() << ">" << "\t" << "<" << it->first << ">" <<  "\t" << "<" << edge_obj.get_tail_node()->get_label()<< ">"  <<"\n";
 			}
 
