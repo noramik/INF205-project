@@ -55,9 +55,6 @@ using namespace graph;
 		 // debug output
 		   std::clog << "\tlog output: calling UndirInclistGraph destructor\n\t\t(this == " << this << ")\n";
 
-		   // deallocate all the edges
-		   //for(auto iter = this->edges.begin(); iter != this->edges.end(); iter++) delete *iter;
-
 		   // Access the vector of Edge*, then iterate through each Edge* element in that vector and deallocate.
 		   for (auto iter : this->edges)
 		   {

@@ -94,12 +94,12 @@ int main()
 				label += std::to_string(i);
 				g.create_edge(label, head, tail);
 
+
 			}
 			graph::Graph t = g;
-			for (auto it = t.get_nodes().begin();  it != t.get_nodes().end(); it++)
-			{
-				std::cout << it->first;
-			}
+			std::cout << g;
+
+
 
 	//program();
 	/*

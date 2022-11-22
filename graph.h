@@ -97,6 +97,8 @@ namespace graph
 
 	~Graph();// Destructor
 	Graph(const Graph& orig);
+
+
 	/*
 	Copy constructor and assignement or forbid copying.
 	Move_constructor()?
