@@ -20,6 +20,7 @@ using namespace graph;
 
 	 */
 
+
 	Node* Graph::create_node(std::string node_label)
 	{
 		if (this->nodes.find(node_label) == this->nodes.end()) //Checks whether the node already exists in the nodes map, if it doesn't it creates it.
@@ -75,7 +76,10 @@ using namespace graph;
 		   for (auto iter : this->edges)
 		   {
 			   std::vector<Edge*> edge_vector = iter.second;
-			   for (auto x=edge_vector.begin(); x != edge_vector.end(); x++) delete *x; // Not sure if this works or not, but at least no error messages.
+			   for (auto x=edge_vector.begin(); x != edge_vector.end(); x++)
+				   {
+				   delete *x; // Not sure if this works or not, but at least no error messages.
+				   }
 		   }
 
 		   this->edges.clear(); // Not sure if this is needed, clears the whole map, both key and val.
@@ -85,6 +89,7 @@ using namespace graph;
 		   for (auto iter : this->nodes)
 			   {
 				   Node* node = iter.second;
+
 				   delete node; // Not sure if this works or not, but at least no error messages. Does this actually destroy the node itself or just the pointer to it?
 			   }
 		   this->nodes.clear(); // Not sure if this is needed, clears the whole map, both key and val.
