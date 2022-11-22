@@ -85,32 +85,33 @@ using namespace graph;
 	Graph::Graph(const Graph& orig)
 	{
 		std::clog << "\tlog output: calling Graph copy constructor\n\t\t(this == " << this << ")\n";
-		for(auto i = orig.edges.begin(); i != orig.edges.end(); i++)
-				{
-					std::vector<Edge*> edge_vec = i->second;
-					for(auto it = edge_vec.begin(); it != edge_vec.end(); it++)
-					{
-						this->create_edge((*it)->get_label(), (*it)->get_head_node()->get_label(), (*it)->get_tail_node()->get_label());
-					}
-					/*
-					for(auto j = 0; j <= size(edge_vec); i++)
-					{
-						this->create_edge(edge_vec[j]->get_label(), edge_vec[j]->get_head_node()->get_label(), edge_vec[j]->get_tail_node()->get_label());
+		for(auto it = orig.edges.begin(); it != orig.edges.end(); it++)
+		{
+			std::vector<Edge*> edge_vec = it->second;
+			for(auto vec_it = edge_vec.begin(); vec_it != edge_vec.end(); vec_it++)
+			{
+				this->create_edge(it->first, (*vec_it)->get_head_node()->get_label(), (*vec_it)->get_tail_node()->get_label());
+			}
+		}
 
-					}
-					*/
-				}
 		for (auto i = orig.nodes.begin(); i != orig.nodes.end(); i++)
 		{
-			this->create_node(i->second->get_label());
+			this->create_node(i->first);
 		}
+
 
 	}
 
 	// Copy assignment
+	// Temp version, currently not working
 	Graph& Graph::operator=(const Graph& rhs)
 	{
-	   // Access the vector of Edge*, then iterate through each Edge* element in that vector and deallocate.
+
+		// This I basically just took from undir-inclist-graph.cpp
+		 // debug output
+		   std::clog << "\tlog output: calling UndirInclistGraph destructor\n\t\t(this == " << this << ")\n";
+
+		   // Access the vector of Edge*, then iterate through each Edge* element in that vector and deallocate.
 		   for (auto iter : this->edges)
 		   {
 			   std::vector<Edge*> edge_vector = iter.second;
@@ -130,19 +131,23 @@ using namespace graph;
 
 				   delete node; // Not sure if this works or not, but at least no error messages. Does this actually destroy the node itself or just the pointer to it?
 			   }
-		   this->nodes.clear();
+		   this->nodes.clear(); // Not sure if this is needed, clears the whole map, both key and val.
+
+
+
 
 			for (auto i = rhs.nodes.begin(); i != rhs.nodes.end(); i++)
 			{
-				this->create_node(i->second->get_label());
+				this->create_node(i->first);
 			}
 			for(auto i = rhs.edges.begin(); i != rhs.edges.end(); i++)
 			{
+
 				std::vector<Edge*> edge_vec = i->second;
-				for(auto j = 1; j != size(edge_vec); i++)
-				{
-					this->create_edge(edge_vec[j]->get_label(), edge_vec[j]->get_head_node()->get_label(), edge_vec[j]->get_tail_node()->get_label());
-				}
+					for(auto it = edge_vec.begin(); it != edge_vec.end(); it++)
+					{
+						this->create_edge((*it)->get_label(), (*it)->get_head_node()->get_label(), (*it)->get_tail_node()->get_label());
+					}
 			}
 			return *this;
 

@@ -101,8 +101,10 @@ int main()
 			}
 			//graph::Graph t;
 			//t.create_edge("Edge1", "Node1", "Node2" );
+			//graph::Graph t;
+			//t.create_edge("Edge1", "Node1", "Node2" );
 			graph::Graph t = g;
-			std::map <std::string, graph::Node*> node_map = t.get_nodes();
+			//std::map <std::string, graph::Node*> node_map = t.get_nodes();
 			std::cout << t;
 			/*
 			for (auto it: node_map)
