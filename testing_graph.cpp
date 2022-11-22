@@ -9,7 +9,10 @@
 #include <fstream>
 #include <iostream>
 #include <string>
-using namespace graph;
+#include <chrono>
+#include <thread>
+//using namespace graph;
+using namespace std::chrono_literals;
 /*
 int main()
 {
@@ -39,40 +42,56 @@ int main()
 }
 */
 
-int main(int argc, char** argv)
+void program()
 {
-   assert(argc >= 2);  //Why is this 3, it throws an error, don't know why
+		/*
+	   assert(argc >= 2);  //Why is this 3, it throws an error, don't know why
 
-   std::ifstream indata(argv[1]);
-   if(!indata)
-   {
-      std::cerr << "Error! File " << argv[1] << " cannot be read.\n";
-      return EXIT_FAILURE;
-   }
-   graph::Graph g;
-   indata >> g;
-   /*
-   std::map<std::string, graph::Node*> nodes = g.get_nodes();
-	for (const auto& x: nodes)
+	   std::ifstream indata(argv[1]);
+	   if(!indata)
+	   {
+	      std::cerr << "Error! File " << argv[1] << " cannot be read.\n";
+	      //return EXIT_FAILURE;
+	   }
+	   graph::Graph g;
+	   indata >> g;
+	   /*
+	   std::map<std::string, graph::Node*> nodes = g.get_nodes();
+		for (const auto& x: nodes)
+		{
+			std::cout << x.first << "\t"  << std::endl;
+		}
+		*/
+
+		graph::Graph g;
+
+
+		for (int i = 1; i < 1000000; i++)
+		{
+			std::string head = "head";
+			std::string tail = "tail";
+			head += std::to_string(i);
+			tail += std::to_string(i);
+			std::string label = "label";
+			label += std::to_string(i);
+			g.create_edge(label, head, tail);
+
+		}
+}
+
+int main()
+{
+	program();
+	for (int i = 1; i < 100; i++)
 	{
-		std::cout << x.first << "\t"  << std::endl;
+		std::cout << i << "\n";
+		std::this_thread::sleep_for(1s);
 	}
-	*/
+}
 
 
 
-
-	for (int i = 1; i < 1000; i++)
-	{
-		std::string head = "head";
-		std::string tail = "tail";
-		head += std::to_string(i);
-		tail += std::to_string(i);
-		std::string label = "label";
-		label += std::to_string(i);
-		g.create_node(head);
-	}
-	std::cout << g;
+	//std::cout << g;
 
 	/*
    std::unordered_map<std::string, std::vector<Edge*> > edges = g.get_edges();
@@ -96,7 +115,7 @@ int main(int argc, char** argv)
 
    g.query(&q, &std::cout);  // apply query q to graph g
    */
-}
+
 
 
 
