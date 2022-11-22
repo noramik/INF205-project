@@ -1,16 +1,14 @@
-//#include <iostream>
-//#include <string>
-
-
-#include "graph.h"
-#include "query.h"
-
 #include <cassert>
 #include <fstream>
 #include <iostream>
 #include <string>
 #include <chrono>
 #include <thread>
+
+
+#include "graph.h"
+
+
 //using namespace graph;
 using namespace std::chrono_literals;
 /*
@@ -66,7 +64,7 @@ void program()
 		graph::Graph g;
 
 
-		for (int i = 1; i < 1000000; i++)
+		for (int i = 1; i < 100; i++)
 		{
 			std::string head = "head";
 			std::string tail = "tail";
@@ -77,16 +75,40 @@ void program()
 			g.create_edge(label, head, tail);
 
 		}
+		graph::Graph t = g;
+		std::cout << t;
 }
 
 int main()
 {
-	program();
+	graph::Graph g;
+
+
+			for (int i = 1; i < 100; i++)
+			{
+				std::string head = "head";
+				std::string tail = "tail";
+				head += std::to_string(i);
+				tail += std::to_string(i);
+				std::string label = "label";
+				label += std::to_string(i);
+				g.create_edge(label, head, tail);
+
+			}
+			graph::Graph t = g;
+			for (auto it = t.get_nodes().begin();  it != t.get_nodes().end(); it++)
+			{
+				std::cout << it->first;
+			}
+
+	//program();
+	/*
 	for (int i = 1; i < 100; i++)
 	{
 		std::cout << i << "\n";
 		std::this_thread::sleep_for(1s);
 	}
+	*/
 }
 
 

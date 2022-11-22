@@ -42,22 +42,22 @@ namespace graph
 	{
 	public:
 	Edge() {} //default constructor
-	/// Constructor
+	// Constructor
 	Edge(std:: string in_label, Node* head_node, Node* tail_node) {
 		this->label=in_label;
 		this->set_head_node(head_node);
 		this->set_tail_node(tail_node);
 	};
 
-	/// Returns the label of the edge
+	// Returns the label of the edge
 	std::string get_label() const {return this->label;};
 	/// Returns the node the edge is leading from.
 	Node* get_head_node() const {return this->head_node;}
-	/// Returns the node the edge is leading to.
+	// Returns the node the edge is leading to.
 	Node* get_tail_node() const {return this->tail_node;}
-	/// Sets head node
+	// Sets head node
 	void set_head_node(Node* new_node) {this->head_node = new_node;}
-	/// Sets tail node
+	// Sets tail node
 	void set_tail_node(Node* new_node) {this->tail_node = new_node;}
 
 
@@ -71,13 +71,13 @@ namespace graph
 	{
 	public:
 	Graph() {}; // Constructor, to be implemented
-	/// Creates new node, if a node with label already exists, it returns that node.
+	// Creates new node, if a node with label already exists, it returns that node.
 	Node* create_node(std::string in_label);
-	/// Creates new edge.
+	// Creates new edge.
 	void create_edge(std::string in_label, std::string head_node_name, std::string tail_node_name);
-	/// Returns the node map.
+	// Returns the node map.
 	std::map<std::string, Node*> get_nodes() const {return this->nodes;}
-	/// Returns the edges map
+	// Returns the edges map
 	std::unordered_map<std::string, std::vector<Edge*> > get_edges() const {return this->edges;}
 	// in method copied from directed-graph example from lecture.
     // read from *source
@@ -87,7 +87,7 @@ namespace graph
     void out(std::ostream* target){
     	print_graph(target);
     }
-    /// Prints the graph.
+    // Prints the graph.
     void print_graph(std::ostream* target);
 	/*
 
@@ -96,6 +96,7 @@ namespace graph
 	std::vector<std::vector<Node*>> find_pattern(const std::string p[], const std::string q[], bool return_nodes=false);  //False betyr True/False answer. True betyr finn alle noder og returner med label.
 
 	~Graph();// Destructor
+	Graph(const Graph& orig);
 	/*
 	Copy constructor and assignement or forbid copying.
 	Move_constructor()?

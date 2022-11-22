@@ -4,22 +4,8 @@
 #include <cassert>
 
 #include "graph.h"
-//#include "query.h" // I don't think this was included in directed-graph example but I don't get code to run without it
 
 using namespace graph;
-
-	/*
-	void create_node(std::string in_label) // should label and edges be passed as an argument?
-	// We have to do that directly in with passing arguments here and passing them to Node constructor
-	// either that or we have to implement set functions for node class.
-	{
-	 Node new_node = Node(in_label);
-	 this->nodes.push_back(&new_node);
-
-	}
-
-	 */
-
 
 	Node* Graph::create_node(std::string node_label)
 	{
@@ -98,6 +84,22 @@ using namespace graph;
 		//Need to remember to delete the pointers from Node and Edge class as well
 	}
 
+	//Copy constructor
+	Graph::Graph(const Graph& orig)
+	{
+		for (auto i = orig.nodes.begin(); i != orig.nodes.end(); i++)
+		{
+			this->create_node(i->second->get_label());
+		}
+		for(auto i = orig.edges.begin(); i != orig.edges.end(); i++)
+		{
+			std::vector<Edge*> edge_vec = i->second;
+			for(auto j = 1; j != size(edge_vec); i++)
+			{
+				this->create_edge(edge_vec[j]->get_label(), edge_vec[j]->get_head_node()->get_label(), edge_vec[j]->get_tail_node()->get_label());
+			}
+		}
+	}
 
 	// Implementation from lecture code - directed-graph
 	// create a single edge based on information from the stream
