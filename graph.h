@@ -96,7 +96,8 @@ namespace graph
 	std::vector<std::vector<Node*>> find_pattern(const std::string p[], const std::string q[], bool return_nodes=false);  //False betyr True/False answer. True betyr finn alle noder og returner med label.
 
 	~Graph();// Destructor
-	Graph(const Graph& orig);
+	Graph(const Graph& orig); // Copy constructor
+	Graph& operator=(const Graph& rhs); // Copy assignment
 
 
 	/*
@@ -111,9 +112,9 @@ namespace graph
 
 	private:
 	// Unordered map for edges, where label is key, and vector of edge pointers as value.
-	std::unordered_map<std::string, std::vector<Edge*> > edges;
+	std::unordered_map<std::string, std::vector<Edge*> > edges = std::unordered_map<std::string, std::vector<Edge*> >();
 	// Map for nodes, label as key, Node pointer as value.
-	std::map<std::string, Node*> nodes;
+	std::map<std::string, Node*> nodes = std::map<std::string, Node*>();
 	bool generate_edge_from(std::istream* source); // Implementation of this copied from directed-graph example.
 
     struct Parameters;
@@ -123,4 +124,5 @@ namespace graph
 }
 std::istream& operator>>(std::istream& is, graph::Graph& g);
 std::ostream& operator<<(std::ostream& os, graph::Graph& g);
+
 #endif

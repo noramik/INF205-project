@@ -84,18 +84,68 @@ using namespace graph;
 	//Copy constructor
 	Graph::Graph(const Graph& orig)
 	{
+		std::clog << "\tlog output: calling Graph copy constructor\n\t\t(this == " << this << ")\n";
+		for(auto i = orig.edges.begin(); i != orig.edges.end(); i++)
+				{
+					std::vector<Edge*> edge_vec = i->second;
+					for(auto it = edge_vec.begin(); it != edge_vec.end(); it++)
+					{
+						this->create_edge((*it)->get_label(), (*it)->get_head_node()->get_label(), (*it)->get_tail_node()->get_label());
+					}
+					/*
+					for(auto j = 0; j <= size(edge_vec); i++)
+					{
+						this->create_edge(edge_vec[j]->get_label(), edge_vec[j]->get_head_node()->get_label(), edge_vec[j]->get_tail_node()->get_label());
+
+					}
+					*/
+				}
 		for (auto i = orig.nodes.begin(); i != orig.nodes.end(); i++)
 		{
 			this->create_node(i->second->get_label());
 		}
-		for(auto i = orig.edges.begin(); i != orig.edges.end(); i++)
-		{
-			std::vector<Edge*> edge_vec = i->second;
-			for(auto j = 1; j != size(edge_vec); i++)
+
+	}
+
+	// Copy assignment
+	Graph& Graph::operator=(const Graph& rhs)
+	{
+	   // Access the vector of Edge*, then iterate through each Edge* element in that vector and deallocate.
+		   for (auto iter : this->edges)
+		   {
+			   std::vector<Edge*> edge_vector = iter.second;
+			   for (auto x=edge_vector.begin(); x != edge_vector.end(); x++)
+				   {
+				   delete *x; // Not sure if this works or not, but at least no error messages.
+				   }
+		   }
+
+		   this->edges.clear(); // Not sure if this is needed, clears the whole map, both key and val.
+
+		   // Deleting Node* on the heap
+		   // Do I need to delete the key as well? that shouldn't be on the heap though? It's just std::string
+		   for (auto iter : this->nodes)
+			   {
+				   Node* node = iter.second;
+
+				   delete node; // Not sure if this works or not, but at least no error messages. Does this actually destroy the node itself or just the pointer to it?
+			   }
+		   this->nodes.clear();
+
+			for (auto i = rhs.nodes.begin(); i != rhs.nodes.end(); i++)
 			{
-				this->create_edge(edge_vec[j]->get_label(), edge_vec[j]->get_head_node()->get_label(), edge_vec[j]->get_tail_node()->get_label());
+				this->create_node(i->second->get_label());
 			}
-		}
+			for(auto i = rhs.edges.begin(); i != rhs.edges.end(); i++)
+			{
+				std::vector<Edge*> edge_vec = i->second;
+				for(auto j = 1; j != size(edge_vec); i++)
+				{
+					this->create_edge(edge_vec[j]->get_label(), edge_vec[j]->get_head_node()->get_label(), edge_vec[j]->get_tail_node()->get_label());
+				}
+			}
+			return *this;
+
 	}
 
 	// Implementation from lecture code - directed-graph

@@ -4,6 +4,9 @@
 #include <string>
 #include <chrono>
 #include <thread>
+#include <map>
+#include <vector>
+#include <unordered_map>
 
 
 #include "graph.h"
@@ -96,9 +99,30 @@ int main()
 
 
 			}
+			//graph::Graph t;
+			//t.create_edge("Edge1", "Node1", "Node2" );
 			graph::Graph t = g;
-			std::cout << g;
+			std::map <std::string, graph::Node*> node_map = t.get_nodes();
+			std::cout << t;
+			/*
+			for (auto it: node_map)
+			{
+				std::cout << it.first << "\n";
+			}
 
+
+			std::unordered_map <std::string, std::vector<graph::Edge*> > edge_map = t.get_edges();
+			for (auto it: edge_map)
+			{
+				std::cout << it.first << "\n";
+			}
+
+			std::unordered_map <std::string, std::vector<graph::Edge*> > edge_map2 = g.get_edges();
+						for (auto it: edge_map2)
+						{
+							std::cout << it.first << "\n";
+						}
+			*/
 
 
 	//program();
