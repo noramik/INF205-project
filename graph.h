@@ -98,8 +98,8 @@ namespace graph
 
 	Node* get_node_pointer_by_unique_label() (?)
     */
-	//~Graph();// default destructor or additional functionality for handling pointers?
-	std::vector<std::vector<Node*>> find_pattern(const std::string p[], const std::string q[], bool return_nodes=false);  //False betyr True/False answer. True betyr finn alle noder og returner med label.
+
+    std::vector<std::vector<Node*>> find_pattern(std::vector<std::string> p, std::vector<std::string> q, bool return_nodes=false); //False betyr True/False answer. True betyr finn alle noder og returner med label.
 
 	~Graph();// Destructor
 	Graph(const Graph& orig); // Copy constructor
