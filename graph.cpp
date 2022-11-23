@@ -4,21 +4,8 @@
 #include <cassert>
 
 #include "graph.h"
-//#include "query.h" // I don't think this was included in directed-graph example but I don't get code to run without it
 
 using namespace graph;
-
-	/*
-	void create_node(std::string in_label) // should label and edges be passed as an argument?
-	// We have to do that directly in with passing arguments here and passing them to Node constructor
-	// either that or we have to implement set functions for node class.
-	{
-	 Node new_node = Node(in_label);
-	 this->nodes.push_back(&new_node);
-
-	}
-
-	 */
 
 	Node* Graph::create_node(std::string node_label)
 	{
@@ -68,23 +55,24 @@ using namespace graph;
 		 // debug output
 		   std::clog << "\tlog output: calling UndirInclistGraph destructor\n\t\t(this == " << this << ")\n";
 
-		   // deallocate all the edges
-		   //for(auto iter = this->edges.begin(); iter != this->edges.end(); iter++) delete *iter;
-
 		   // Access the vector of Edge*, then iterate through each Edge* element in that vector and deallocate.
-		   for (auto iter : this->edges)
+		   for (auto iter = this->edges.begin(); iter != this->edges.end(); iter++)
 		   {
-			   std::vector<Edge*> edge_vector = iter.second;
-			   for (auto x=edge_vector.begin(); x != edge_vector.end(); x++) delete *x; // Not sure if this works or not, but at least no error messages.
+			   std::vector<Edge*> edge_vector = iter->second;
+			   for (auto x=edge_vector.begin(); x != edge_vector.end(); x++)
+				   {
+				   delete *x; // Not sure if this works or not, but at least no error messages.
+				   }
 		   }
 
 		   this->edges.clear(); // Not sure if this is needed, clears the whole map, both key and val.
 
 		   // Deleting Node* on the heap
 		   // Do I need to delete the key as well? that shouldn't be on the heap though? It's just std::string
-		   for (auto iter : this->nodes)
+		   for (auto iter = this->nodes.begin(); iter != this->nodes.end(); iter++)
 			   {
-				   Node* node = iter.second;
+				   Node* node = iter->second;
+
 				   delete node; // Not sure if this works or not, but at least no error messages. Does this actually destroy the node itself or just the pointer to it?
 			   }
 		   this->nodes.clear(); // Not sure if this is needed, clears the whole map, both key and val.
@@ -93,6 +81,74 @@ using namespace graph;
 		//Need to remember to delete the pointers from Node and Edge class as well
 	}
 
+	//Copy constructor
+	Graph::Graph(const Graph& orig)
+	{
+		std::clog << "\tlog output: calling Graph copy constructor\n\t\t(this == " << this << ")\n";
+		for(auto it = orig.edges.begin(); it != orig.edges.end(); it++)
+		{
+			std::vector<Edge*> edge_vec = it->second;
+			for(auto vec_it = edge_vec.begin(); vec_it != edge_vec.end(); vec_it++)
+			{
+				// Access edge label, head node label and tail node label and give them as parameters to create_edge function.
+				this->create_edge(it->first, (*vec_it)->get_head_node()->get_label(), (*vec_it)->get_tail_node()->get_label());
+			}
+		}
+
+		for (auto i = orig.nodes.begin(); i != orig.nodes.end(); i++)
+		{
+			this->create_node(i->first); //Do I need this
+		}
+
+
+	}
+
+	// Copy assignment
+	// Temp version, currently not working
+	Graph& Graph::operator=(const Graph& rhs)
+	{
+
+		// This I basically just took from undir-inclist-graph.cpp
+		 // debug output
+		   std::clog << "\tlog output: calling Graph copy assignment operator\n\t\t(this == " << this << ")\n";
+
+
+		   // Deleting old edges and node
+
+		   // Deleting edges
+		   for (auto it =this->edges.begin(); it != this->edges.end(); it++)
+		   {
+			   for (auto vec_it = it->second.begin(); vec_it != it->second.end(); vec_it++)
+			   {
+				   delete *vec_it;
+			   }
+		   }
+		   this->edges.clear(); // Clears the whole unordered map, keys and vals
+
+			// Deleting nodes
+			for (auto it = this->nodes.begin(); it !=this->nodes.end(); it++)
+			{
+				delete it->second;
+			}
+			this->nodes.clear(); // Clears the whole nodes map, both keys and vals
+
+
+		   //Copying from rhs
+		   for (auto it = rhs.edges.begin(); it != rhs.edges.end(); it++)
+		   {
+			   for (auto vec_it = it->second.begin(); vec_it != it->second.end(); vec_it++)
+			   {
+				   this->create_edge((*vec_it)->get_label(), (*vec_it)->get_head_node()->get_label(), (*vec_it)->get_tail_node()->get_label());
+			   }
+		   }
+		   for (auto it = rhs.nodes.begin(); it != rhs.nodes.end(); it++)
+		   {
+			   this->create_node(it->first);
+		   }
+		   return *this;
+
+
+	}
 
 	// Implementation from lecture code - directed-graph
 	// create a single edge based on information from the stream
@@ -140,6 +196,9 @@ using namespace graph;
 	   return true;
 	}
 
+	/*
+	 * Prints out graph in same format at input file.
+	 */
 	void Graph::print_graph(std::ostream* target)
 	{
 		for (auto it = this->edges.begin(); it != this->edges.end(); it++)
@@ -148,7 +207,7 @@ using namespace graph;
 
 			for (auto edge_it = edge_vec.begin(); edge_it != edge_vec.end(); edge_it++)
 			{
-				Edge edge_obj = **edge_it;
+				Edge edge_obj = **edge_it; // The edge object
 				*target << "<" << edge_obj.get_head_node()->get_label() << ">" << "\t" << "<" << it->first << ">" <<  "\t" << "<" << edge_obj.get_tail_node()->get_label()<< ">"  <<"\n";
 			}
 
