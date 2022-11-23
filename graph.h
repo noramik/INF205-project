@@ -8,33 +8,40 @@
 #include <unordered_map>
 #include <map>
 
-
+/*
+ * Directed Graph
+ * Memory managment rules:
+ * The graph object owns its nodes and edges.
+ * The edge and node objects don't delete each other, they just have non-owning pointers to each other.
+ */
 
 namespace graph
 {
-	class Edge; // Edge class is defined here to avoid problems when we declare variables as Edge* in Node class.
-	// Implementation is further down in the file.
+	/*
+	 * Edge class is defined here to avoid problems when we declare variables as Edge* in Node class.
+	 * Implementation is further down in the file.
+	 */
+	class Edge;
 
 	class Node
 	{
 	public:
-	Node() {} //default constructor
+	Node() {} // Default constructor
 	Node(std::string in_label) {this->label = in_label;} // Constructor
 
 
-	std::string get_label() const {return this->label;} // spørsmål: må det være const her? hvorfor?
-	std::vector<Edge*> get_prev_edges() const {return this->prev_edges;} // returning edges leading to the node. Can this even be const as prev_edges might change
-	std::vector<Edge*> get_next_edges() const {return this->next_edges;} // returning edges going from the node. Can this even be const as next_edges might change
-	void append_prev_edges(Edge* new_edge) {this->prev_edges.push_back(new_edge);}
-	void append_next_edges(Edge* new_edge) {this->next_edges.push_back(new_edge);}
+	std::string get_label() const {return this->label;} // Returns edge label
+	std::vector<Edge*> get_prev_edges() const {return this->prev_edges;} // returning edges leading to the node.
+	std::vector<Edge*> get_next_edges() const {return this->next_edges;} // returning edges going out from the node.
+	void append_prev_edges(Edge* new_edge) {this->prev_edges.push_back(new_edge);} // Appends new edge to the prev_edges vector
+	void append_next_edges(Edge* new_edge) {this->next_edges.push_back(new_edge);} // Appends new edge to the next_edges vector
 
 
 
 
 	private:
 	std::string label = "";
-	std::vector<Edge*> prev_edges = std::vector<Edge*>(); // this is how it's done in undir-inclist-graph.h instead of nullptr
-	// Is this the way it needs to be done? What does it do? Creates an empty vector? uses edge default constructor?
+	std::vector<Edge*> prev_edges = std::vector<Edge*>();
 	std::vector<Edge*> next_edges = std::vector<Edge*>();
 	};
 
@@ -70,7 +77,7 @@ namespace graph
 	class Graph
 	{
 	public:
-	Graph() {}; // Constructor, to be implemented
+	Graph() {}; // Constructor
 	// Creates new node, if a node with label already exists, it returns that node.
 	Node* create_node(std::string in_label);
 	// Creates new edge.
@@ -84,9 +91,7 @@ namespace graph
     void in(std::istream* source) {
        while(this->generate_edge_from(source)) {} };// read edge by edge, until generate_edge_from returns false
     // Writes to *target
-    void out(std::ostream* target){
-    	print_graph(target);
-    }
+    void out(std::ostream* target){print_graph(target);}
     // Prints the graph.
     void print_graph(std::ostream* target);
 	/*
@@ -122,6 +127,7 @@ namespace graph
 	};
 
 }
+// I/O stream operator overloading
 std::istream& operator>>(std::istream& is, graph::Graph& g);
 std::ostream& operator<<(std::ostream& os, graph::Graph& g);
 

@@ -56,9 +56,9 @@ using namespace graph;
 		   std::clog << "\tlog output: calling UndirInclistGraph destructor\n\t\t(this == " << this << ")\n";
 
 		   // Access the vector of Edge*, then iterate through each Edge* element in that vector and deallocate.
-		   for (auto iter : this->edges)
+		   for (auto iter = this->edges.begin(); iter != this->edges.end(); iter++)
 		   {
-			   std::vector<Edge*> edge_vector = iter.second;
+			   std::vector<Edge*> edge_vector = iter->second;
 			   for (auto x=edge_vector.begin(); x != edge_vector.end(); x++)
 				   {
 				   delete *x; // Not sure if this works or not, but at least no error messages.
@@ -69,9 +69,9 @@ using namespace graph;
 
 		   // Deleting Node* on the heap
 		   // Do I need to delete the key as well? that shouldn't be on the heap though? It's just std::string
-		   for (auto iter : this->nodes)
+		   for (auto iter = this->nodes.begin(); iter != this->nodes.end(); iter++)
 			   {
-				   Node* node = iter.second;
+				   Node* node = iter->second;
 
 				   delete node; // Not sure if this works or not, but at least no error messages. Does this actually destroy the node itself or just the pointer to it?
 			   }
@@ -90,13 +90,14 @@ using namespace graph;
 			std::vector<Edge*> edge_vec = it->second;
 			for(auto vec_it = edge_vec.begin(); vec_it != edge_vec.end(); vec_it++)
 			{
+				// Access edge label, head node label and tail node label and give them as parameters to create_edge function.
 				this->create_edge(it->first, (*vec_it)->get_head_node()->get_label(), (*vec_it)->get_tail_node()->get_label());
 			}
 		}
 
 		for (auto i = orig.nodes.begin(); i != orig.nodes.end(); i++)
 		{
-			this->create_node(i->first);
+			this->create_node(i->first); //Do I need this
 		}
 
 
@@ -109,12 +110,12 @@ using namespace graph;
 
 		// This I basically just took from undir-inclist-graph.cpp
 		 // debug output
-		   std::clog << "\tlog output: calling UndirInclistGraph destructor\n\t\t(this == " << this << ")\n";
+		   std::clog << "\tlog output: calling Graph copy assignment operator\n\t\t(this == " << this << ")\n";
 
 		   // Access the vector of Edge*, then iterate through each Edge* element in that vector and deallocate.
-		   for (auto iter : this->edges)
+		   for (auto iter = this->edges.begin(); iter != this->edges.end(); iter++)
 		   {
-			   std::vector<Edge*> edge_vector = iter.second;
+			   std::vector<Edge*> edge_vector = iter->second;
 			   for (auto x=edge_vector.begin(); x != edge_vector.end(); x++)
 				   {
 				   delete *x; // Not sure if this works or not, but at least no error messages.
@@ -125,9 +126,9 @@ using namespace graph;
 
 		   // Deleting Node* on the heap
 		   // Do I need to delete the key as well? that shouldn't be on the heap though? It's just std::string
-		   for (auto iter : this->nodes)
+		   for (auto iter = this->nodes.begin(); iter != this->nodes.end(); iter++)
 			   {
-				   Node* node = iter.second;
+				   Node* node = iter->second;
 
 				   delete node; // Not sure if this works or not, but at least no error messages. Does this actually destroy the node itself or just the pointer to it?
 			   }
