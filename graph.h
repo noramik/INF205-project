@@ -84,8 +84,7 @@ namespace graph
 	multimap get_edges() //get the multimap
 	Node* get_node_pointer_by_unique_label() (?)
     */
-	std::vector<std::vector<Node*>> find_pattern(const std::string p[], const std::string q[], bool return_nodes=false);  //False betyr True/False answer. True betyr finn alle noder og returner med label.
-
+    std::vector<std::vector<Node*>> find_pattern(std::vector<std::string> p, std::vector<std::string> q, bool return_nodes=false); //False betyr True/False answer. True betyr finn alle noder og returner med label.
 	~Graph();// default destructor or additional functionality for handling pointers?
 	/*
 	Copy constructor and assignement or forbid copying.
@@ -104,8 +103,13 @@ namespace graph
 	std::map<std::string, Node*> nodes; // What data stucture here? Map? Set? vector?
 	bool generate_edge_from(std::istream* source); // Implementation of this copied from directed-graph example.
 
+    // Private functions only relevant for function "find_pattern"... INvestigate if this can be "hidden" elsewhere
     struct Parameters;
 	std::vector<Edge*> analyse_graph(Parameters &params);
+	std::vector<Edge*> analyse_path_edges(const bool start, Parameters &params, std::map<std::string,int> &counted_instances);
+    void iterate_forward(Edge* edge, std::vector<Node*> stash, int current_index, Parameters &params);
+	void iterate_backward(Edge* edge, std::vector<Node*> stash, int current_index, Parameters &params);
+	void search_match(Node* node, std::vector<Node*> &stash, int current_index, Parameters &params);
 	};
 
 }
