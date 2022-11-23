@@ -104,9 +104,9 @@ int main()
 			//t.create_edge("Edge1", "Node1", "Node2" );
 			graph::Graph t;
 			//t.create_edge("Edge1", "Node1", "Node2" );
-			graph::Graph t = *g;
-			delete g;
-			//std::map <std::string, graph::Node*> node_map = t.get_nodes();
+			t = *g;
+			//delete g;
+			std::map <std::string, graph::Node*> node_map = t.get_nodes();
 			std::cout << t;
 			/*
 			for (auto it: node_map)
@@ -114,7 +114,7 @@ int main()
 				std::cout << it.first << "\n";
 			}
 
-
+			/*
 			std::unordered_map <std::string, std::vector<graph::Edge*> > edge_map = t.get_edges();
 			for (auto it: edge_map)
 			{

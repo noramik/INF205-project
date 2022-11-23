@@ -130,7 +130,7 @@ using namespace graph;
 			{
 				delete it->second;
 			}
-			this->nodes.clear();
+			this->nodes.clear(); // Clears the whole nodes map, both keys and vals
 
 
 		   //Copying from rhs
@@ -141,60 +141,11 @@ using namespace graph;
 				   this->create_edge((*vec_it)->get_label(), (*vec_it)->get_head_node()->get_label(), (*vec_it)->get_tail_node()->get_label());
 			   }
 		   }
-		   for (auto it = rhs.nodes.begin(); it != this->nodes.end(); it++)
+		   for (auto it = rhs.nodes.begin(); it != rhs.nodes.end(); it++)
 		   {
 			   this->create_node(it->first);
 		   }
-
-
-
-
-
-
-
-		   /*
-
-		   // Access the vector of Edge*, then iterate through each Edge* element in that vector and deallocate.
-		   for (auto iter = this->edges.begin(); iter != this->edges.end(); iter++)
-		   {
-			   std::vector<Edge*> edge_vector = iter->second;
-			   for (auto x=edge_vector.begin(); x != edge_vector.end(); x++)
-				   {
-				   delete *x; // Not sure if this works or not, but at least no error messages.
-				   }
-		   }
-
-		   this->edges.clear(); // Not sure if this is needed, clears the whole map, both key and val.
-
-		   // Deleting Node* on the heap
-		   // Do I need to delete the key as well? that shouldn't be on the heap though? It's just std::string
-		   for (auto iter = this->nodes.begin(); iter != this->nodes.end(); iter++)
-			   {
-				   Node* node = iter->second;
-
-				   delete node; // Not sure if this works or not, but at least no error messages. Does this actually destroy the node itself or just the pointer to it?
-			   }
-		   this->nodes.clear(); // Not sure if this is needed, clears the whole map, both key and val.
-
-
-		   // Copying
-		   for(auto i = rhs.edges.begin(); i != rhs.edges.end(); i++)
-			{
-
-				std::vector<Edge*> edge_vec = i->second;
-					for(auto it = edge_vec.begin(); it != edge_vec.end(); it++)
-					{
-						this->create_edge((*it)->get_label(), (*it)->get_head_node()->get_label(), (*it)->get_tail_node()->get_label());
-					}
-			}
-
-		   	 /*
-			for (auto i = rhs.nodes.begin(); i != rhs.nodes.end(); i++)
-			{
-				this->create_node(i->first);
-			}
-			*/
-			return *this;
+		   return *this;
 
 
 	}
