@@ -85,9 +85,9 @@ void program()
 
 int main()
 {
-	graph::Graph g;
+	graph::Graph* g = new graph::Graph();
 
-			/*
+
 			for (int i = 1; i < 100; i++)
 			{
 				std::string head = "head";
@@ -96,7 +96,7 @@ int main()
 				tail += std::to_string(i);
 				std::string label = "label";
 				label += std::to_string(i);
-				g.create_edge(label, head, tail);
+				g->create_edge(label, head, tail);
 
 
 			}
@@ -104,10 +104,11 @@ int main()
 			//t.create_edge("Edge1", "Node1", "Node2" );
 			graph::Graph t;
 			//t.create_edge("Edge1", "Node1", "Node2" );
-			graph::Graph t = g;
+			graph::Graph t = *g;
+			delete g;
 			//std::map <std::string, graph::Node*> node_map = t.get_nodes();
 			std::cout << t;
-
+			/*
 			for (auto it: node_map)
 			{
 				std::cout << it.first << "\n";
@@ -125,7 +126,7 @@ int main()
 						{
 							std::cout << it.first << "\n";
 						}
-			*/
+
 
 
 	program();
@@ -135,7 +136,7 @@ int main()
 		std::cout << i << "\n";
 		std::this_thread::sleep_for(1s);
 	}
-
+*/
 }
 
 

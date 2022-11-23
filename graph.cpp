@@ -112,6 +112,48 @@ using namespace graph;
 		 // debug output
 		   std::clog << "\tlog output: calling Graph copy assignment operator\n\t\t(this == " << this << ")\n";
 
+
+		   // Deleting old edges and node
+
+		   // Deleting edges
+		   for (auto it =this->edges.begin(); it != this->edges.end(); it++)
+		   {
+			   for (auto vec_it = it->second.begin(); vec_it != it->second.end(); vec_it++)
+			   {
+				   delete *vec_it;
+			   }
+		   }
+		   this->edges.clear(); // Clears the whole unordered map, keys and vals
+
+			// Deleting nodes
+			for (auto it = this->nodes.begin(); it !=this->nodes.end(); it++)
+			{
+				delete it->second;
+			}
+			this->nodes.clear();
+
+
+		   //Copying from rhs
+		   for (auto it = rhs.edges.begin(); it != rhs.edges.end(); it++)
+		   {
+			   for (auto vec_it = it->second.begin(); vec_it != it->second.end(); vec_it++)
+			   {
+				   this->create_edge((*vec_it)->get_label(), (*vec_it)->get_head_node()->get_label(), (*vec_it)->get_tail_node()->get_label());
+			   }
+		   }
+		   for (auto it = rhs.nodes.begin(); it != this->nodes.end(); it++)
+		   {
+			   this->create_node(it->first);
+		   }
+
+
+
+
+
+
+
+		   /*
+
 		   // Access the vector of Edge*, then iterate through each Edge* element in that vector and deallocate.
 		   for (auto iter = this->edges.begin(); iter != this->edges.end(); iter++)
 		   {
@@ -135,13 +177,8 @@ using namespace graph;
 		   this->nodes.clear(); // Not sure if this is needed, clears the whole map, both key and val.
 
 
-
-
-			for (auto i = rhs.nodes.begin(); i != rhs.nodes.end(); i++)
-			{
-				this->create_node(i->first);
-			}
-			for(auto i = rhs.edges.begin(); i != rhs.edges.end(); i++)
+		   // Copying
+		   for(auto i = rhs.edges.begin(); i != rhs.edges.end(); i++)
 			{
 
 				std::vector<Edge*> edge_vec = i->second;
@@ -150,7 +187,15 @@ using namespace graph;
 						this->create_edge((*it)->get_label(), (*it)->get_head_node()->get_label(), (*it)->get_tail_node()->get_label());
 					}
 			}
+
+		   	 /*
+			for (auto i = rhs.nodes.begin(); i != rhs.nodes.end(); i++)
+			{
+				this->create_node(i->first);
+			}
+			*/
 			return *this;
+
 
 	}
 
