@@ -106,8 +106,9 @@ int main()
 			//t.create_edge("Edge1", "Node1", "Node2" );
 			t = *g;
 			//delete g;
-			std::map <std::string, graph::Node*> node_map = t.get_nodes();
-			std::cout << t;
+			//std::map <std::string, graph::Node*> node_map = t.get_nodes();
+			std::cout << t.get_num_edges();
+
 			/*
 			for (auto it: node_map)
 			{

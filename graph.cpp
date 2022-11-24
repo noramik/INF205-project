@@ -38,10 +38,12 @@ using namespace graph;
 			std::vector<Edge*> e; // intializes vector of Edge*
 			e.push_back(new_edge); //Adds new_edge to vector
 			this->edges.insert({edge_label, e});
+			this->num_edges++;
 		}
 		else
 		{
 			this->edges.at(edge_label).push_back(new_edge);
+			this->num_edges++;
 		}
 
 

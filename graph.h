@@ -94,6 +94,7 @@ namespace graph
     void out(std::ostream* target){print_graph(target);}
     // Prints the graph.
     void print_graph(std::ostream* target);
+    int get_num_edges() const {return this->num_edges;}
 	/*
 
 	Node* get_node_pointer_by_unique_label() (?)
@@ -121,6 +122,7 @@ namespace graph
 	std::unordered_map<std::string, std::vector<Edge*> > edges = std::unordered_map<std::string, std::vector<Edge*> >();
 	// Map for nodes, label as key, Node pointer as value.
 	std::map<std::string, Node*> nodes = std::map<std::string, Node*>();
+	int num_edges = 0;
 	bool generate_edge_from(std::istream* source); // Implementation of this copied from directed-graph example.
 
     // Private functions only relevant for function "find_pattern"... INvestigate if this can be "hidden" elsewhere
