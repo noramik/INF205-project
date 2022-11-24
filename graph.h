@@ -81,7 +81,7 @@ namespace graph
 	// Creates new node, if a node with label already exists, it returns that node.
 	Node* create_node(std::string in_label);
 	// Creates new edge.
-	void create_edge(std::string in_label, std::string head_node_name, std::string tail_node_name);
+	void create_edge(std::string in_label, std::string tail_node_name, std::string head_node_name);
 	// Returns the node map.
 	std::map<std::string, Node*> get_nodes() const {return this->nodes;} //Maybe delete, not used anywhere
 	// Returns the edges map

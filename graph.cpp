@@ -21,18 +21,17 @@ using namespace graph;
 		}
 	}
 
-	void Graph::create_edge(std::string edge_label, std::string head_node_name, std::string tail_node_name) //We need head_node and tail_node here right? Or else we have an edge
+	void Graph::create_edge(std::string edge_label, std::string tail_node_name, std::string head_node_name) //We need head_node and tail_node here right? Or else we have an edge
 	// that doesn't connect anything.
 	{
-
+        Node* tail_node = this->create_node(tail_node_name);
 		Node* head_node = this->create_node(head_node_name);
-
-		Node* tail_node = this->create_node(tail_node_name);
 
 
 		Edge* new_edge = new Edge(edge_label, head_node, tail_node); // is this pointer handled safely? When does it get deallocated? With the graph object?
-		head_node->append_next_edges(new_edge); // Would this be correct?
-		tail_node->append_prev_edges(new_edge);
+		tail_node->append_next_edges(new_edge);
+		head_node->append_prev_edges(new_edge); // Would this be correct?
+
 		if (this->edges.find(edge_label) == this->edges.end()) // Checks whether the label is in the map
 		{
 			std::vector<Edge*> e; // intializes vector of Edge*
@@ -93,7 +92,7 @@ using namespace graph;
 			for(auto vec_it = edge_vec.begin(); vec_it != edge_vec.end(); vec_it++)
 			{
 				// Access edge label, head node label and tail node label and give them as parameters to create_edge function.
-				this->create_edge(it->first, (*vec_it)->get_head_node()->get_label(), (*vec_it)->get_tail_node()->get_label());
+				this->create_edge(it->first, (*vec_it)->get_tail_node()->get_label(), (*vec_it)->get_head_node()->get_label());
 			}
 		}
 
@@ -140,7 +139,7 @@ using namespace graph;
 		   {
 			   for (auto vec_it = it->second.begin(); vec_it != it->second.end(); vec_it++)
 			   {
-				   this->create_edge((*vec_it)->get_label(), (*vec_it)->get_head_node()->get_label(), (*vec_it)->get_tail_node()->get_label());
+				   this->create_edge((*vec_it)->get_label(), (*vec_it)->get_tail_node()->get_label(), (*vec_it)->get_head_node()->get_label());
 			   }
 		   }
 		   for (auto it = rhs.nodes.begin(); it != rhs.nodes.end(); it++)
