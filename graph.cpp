@@ -96,6 +96,7 @@ using namespace graph;
 			}
 		}
 
+        // COMMENT from Hanna: blir ikke nodene opprettet samtidig som edgene?
 		for (auto i = orig.nodes.begin(); i != orig.nodes.end(); i++)
 		{
 			this->create_node(i->first); //Do I need this
