@@ -42,10 +42,10 @@ int main()
 
 }
 */
-
+/*
 void program()
 {
-		/*
+
 	   assert(argc >= 2);  //Why is this 3, it throws an error, don't know why
 
 	   std::ifstream indata(argv[1]);
@@ -56,13 +56,14 @@ void program()
 	   }
 	   graph::Graph g;
 	   indata >> g;
-	   /*
+	   std::cout << g;
+
 	   std::map<std::string, graph::Node*> nodes = g.get_nodes();
 		for (const auto& x: nodes)
 		{
 			std::cout << x.first << "\t"  << std::endl;
 		}
-		*/
+
 
 		graph::Graph g;
 
@@ -80,11 +81,28 @@ void program()
 		}
 		//graph::Graph t = g;
 		//std::cout << t;
+		/*
 
 }
 
-int main()
+*/
+
+int main(int argc, char** argv)
 {
+
+
+	   assert(argc >= 2);  //Why is this 3, it throws an error, don't know why
+
+	   std::ifstream indata(argv[1]);
+	   if(!indata)
+	   {
+	      std::cerr << "Error! File " << argv[1] << " cannot be read.\n";
+	      //return EXIT_FAILURE;
+	   }
+	   graph::Graph g;
+	   indata >> g;
+	   std::cout << g;
+	  /*
 	graph::Graph* g = new graph::Graph();
 
 

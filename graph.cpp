@@ -152,10 +152,10 @@ using namespace graph;
 
 	}
 
-	// Implementation from lecture code - directed-graph
+	// Implementation from lecture code - directed-graph, with slight modifications
 	// create a single edge based on information from the stream
 	// if it fails, return false, otherwise return true
-	bool Graph::generate_edge_from(std::istream* source)
+	bool Graph::generate_graph_from(std::istream* source)
 	{
 	   char single_symbol = '\0';
 

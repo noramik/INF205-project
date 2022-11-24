@@ -89,12 +89,12 @@ namespace graph
 	// in method copied from directed-graph example from lecture.
     // read from *source
     void in(std::istream* source) {
-       while(this->generate_edge_from(source)) {} };// read edge by edge, until generate_edge_from returns false
+       while(this->generate_graph_from(source)) {} };// read edge by edge, until generate_edge_from returns false
     // Writes to *target
     void out(std::ostream* target){print_graph(target);}
     // Prints the graph.
     void print_graph(std::ostream* target);
-    int get_num_edges() const {return this->num_edges;}
+    int get_num_edges() const {return this->num_edges;} // Returns total number of edges in the graph
 	/*
 
 	Node* get_node_pointer_by_unique_label() (?)
@@ -107,23 +107,14 @@ namespace graph
 	Graph& operator=(const Graph& rhs); // Copy assignment
 
 
-	/*
-	Copy constructor and assignement or forbid copying.
-	Move_constructor()?
-	move_assignment()?
-	*/
-
-
-
-
 
 	private:
 	// Unordered map for edges, where label is key, and vector of edge pointers as value.
 	std::unordered_map<std::string, std::vector<Edge*> > edges = std::unordered_map<std::string, std::vector<Edge*> >();
 	// Map for nodes, label as key, Node pointer as value.
 	std::map<std::string, Node*> nodes = std::map<std::string, Node*>();
-	int num_edges = 0;
-	bool generate_edge_from(std::istream* source); // Implementation of this copied from directed-graph example.
+	int num_edges = 0; // Total number of edges in the graph
+	bool generate_graph_from(std::istream* source); // Implementation of this copied from directed-graph example.
 
     // Private functions only relevant for function "find_pattern"... INvestigate if this can be "hidden" elsewhere
     struct Parameters;
