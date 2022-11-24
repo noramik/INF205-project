@@ -83,9 +83,10 @@ namespace graph
 	// Creates new edge.
 	void create_edge(std::string in_label, std::string head_node_name, std::string tail_node_name);
 	// Returns the node map.
-	std::map<std::string, Node*> get_nodes() const {return this->nodes;}
+	std::map<std::string, Node*> get_nodes() const {return this->nodes;} //Maybe delete, not used anywhere
 	// Returns the edges map
 	std::unordered_map<std::string, std::vector<Edge*> > get_edges() const {return this->edges;}
+
 	// in method copied from directed-graph example from lecture.
     // read from *source
     void in(std::istream* source) {
