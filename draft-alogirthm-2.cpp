@@ -77,8 +77,18 @@ std::vector<Edge*> Graph::analyse_path_edges(const bool start, Parameters &param
     int requirement = floor (tot_num_edges/3); ///Must choose this math carefully. Dummy value now. REPLACE this->tot_num_edges
     std::string p_label = (start) ? params.p[0] : params.p.back(); //first element if at the start, otherwise the last element
     std::string q_label = (start) ? params.q[0] : params.q.back(); //first element if at the start, otherwise the last element
+
     std::vector<Edge*> start_points; //return vector
-    std::vector<Edge*> potential_edges; //edges to search among
+    //std::vector<Edge*> potential_edges; //edges to search among
+    std::vector<std::string> potential_edges; //edges to search among
+    Node* node;
+
+    auto pointer_to_label = [&] (std::vector<Edge*> edge_pointers) {
+        for (Edge* edge: edge_pointers) {
+            potential_edges.push_back(edge->get_label());
+        }
+        return potential_edges;
+    }; //local lambda function
 
     if (counted_instances[p_label] <= counted_instances[q_label] && counted_instances[p_label] < requirement) {
         //.... check for matching nodes
@@ -90,14 +100,17 @@ std::vector<Edge*> Graph::analyse_path_edges(const bool start, Parameters &param
         for (Edge* edge_pointer : this->get_edges().at(p_label)) {
 
             if (start) {//if True
-                Node* node = edge_pointer->get_tail_node();
-                std::vector<Edge*> potential_edges = node->get_next_edges();
+                node = edge_pointer->get_tail_node();
+                //potential_edges = node->get_next_edges();
                 start_index = 0;
+
+                potential_edges = pointer_to_label(node->get_next_edges());
             }
             else { //if at the end
-                Node* node = edge_pointer->get_head_node();
-                std::vector<Edge*> potential_edges = node->get_prev_edges();
+                node = edge_pointer->get_head_node();
+                //potential_edges = node->get_prev_edges();
                 start_index = params.path.size()-1;
+                potential_edges = pointer_to_label(node->get_next_edges());
             }
 
             //std::vector<int>::iterator it; // eller bare auto it =...;
@@ -105,6 +118,9 @@ std::vector<Edge*> Graph::analyse_path_edges(const bool start, Parameters &param
             if (it != potential_edges.end()) {// if found
                 start_points.push_back(edge_pointer);
             }
+
+            //if (something) start_points.push_back(edge_pointer);
+
         }
 
         params.start_index = start_index;
@@ -121,12 +137,14 @@ std::vector<Edge*> Graph::analyse_path_edges(const bool start, Parameters &param
         for (Edge* edge_pointer : this->get_edges().at(q_label)) {
             if (start) {//if True
                 Node* node = edge_pointer->get_tail_node();
-                std::vector<Edge*> potential_edges = node->get_next_edges();
+                //std::vector<Edge*> potential_edges = node->get_next_edges();
+                potential_edges = pointer_to_label(node->get_next_edges());
                 start_index = 0;
             }
             else { //if at the end
                 Node* node = edge_pointer->get_head_node();
-                std::vector<Edge*> potential_edges = node->get_prev_edges();
+                //std::vector<Edge*> potential_edges = node->get_prev_edges();
+                potential_edges = pointer_to_label(node->get_next_edges());
                 start_index = params.path.size()-1;
             }
 
@@ -228,7 +246,7 @@ std::vector<Edge*> Graph::analyse_graph(Parameters &params) {
 
 
     // -----General case: lowest count and longest sequence
-    auto comp = [](std::pair<std::string, int> a, std::pair<std::string, int> b) {
+    auto comp = [&](std::pair<std::string, int> a, std::pair<std::string, int> b) { //captured by reference
         return a.second < b.second;
     }; //lambda function //something wrong i think
     std::pair<std::string, int> minima = *min_element(counted_instances.begin(), counted_instances.end(), comp);
