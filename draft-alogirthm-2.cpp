@@ -167,7 +167,7 @@ std::vector<Edge*> Graph::analyse_path_edges(const bool start, Parameters &param
 
 std::vector<Edge*> Graph::analyse_graph(Parameters &params) {
     ///Returns : starting points. structure params will hold the rest of the information (which sequence, index ...)
-    std::vector<Edge*> start_points;
+    std::vector<Edge*> start_points; //return vector
 
     // create map with keys as edge labels and number of instances as value
     std::map<std::string,int> counted_instances;
@@ -180,7 +180,17 @@ std::vector<Edge*> Graph::analyse_graph(Parameters &params) {
 
 
     for (auto edge_label: unique_labels) {
-        int num_instances = this->get_edges().at(edge_label).size();/*length of list belonging to map edges in graph*/; //at because we KNOW this will be here
+
+        int num_instances;
+        // catch error if given label does not exist in the graph
+        try {
+            num_instances = this->get_edges().at(edge_label).size();/*length of list belonging to map edges in graph*/; //at because we KNOW this will be here
+        }
+        catch (const std::out_of_range& oor){//{ //.at() will throw an out_of_range error
+            std::cerr << "InputError: The provided label '"<<edge_label<< "' does not exist in the graph." << std::endl;
+            //std::cerr << "Out of Range error: " << oor.what() << '\n';
+            return start_points;
+        }
 
         // Special case; If we have any unique edges, we choose the first appearance and stop the analysis
         if (num_instances == 1) {/* find which sequence this label is in (p or q), prioritize the longest one*/
@@ -279,10 +289,6 @@ std::vector<Edge*> Graph::analyse_graph(Parameters &params) {
     params.path = (params.path_letter == 'p') ? params.p : params.q;
     return start_points;
 };
-
-
-
-
 
 
 
@@ -393,11 +399,16 @@ std::vector<std::vector<Node*>> Graph::find_pattern(std::vector<std::string> p, 
     params.p = p;
     params.q = q;
 
+    //Make global variables for each rank. can this be made before different ranks are running???
+    std::vector<std::vector<Node*>> found_patterns;
+    bool exit = false;
+    params.found_patterns = &found_patterns;
+    params.exit = &exit;
+
     auto starting_points = analyse_graph(params);
-    // THESE PARAMTERES SHOULD BE ADDED TO params in the analysis!!! and not returned. more clear code
-    //update return value! oly return starting_points?
+
     if (starting_points.empty()) {//Somehow check if starting points is empty:
-        std::cout << "No such pattern exists in the graph.";
+        std::cout << "No such pattern exists in the graph." << std::endl;
         return *params.found_patterns;
     }
 
@@ -415,11 +426,12 @@ std::vector<std::vector<Node*>> Graph::find_pattern(std::vector<std::string> p, 
     // Create instance of struct, fill in values and send as reference
     //Parameters params; //each rank has it's own
 
+    /*
     //Make global variables for each rank. can this be made before different ranks are running???
     std::vector<std::vector<Node*>> found_patterns;
     bool exit = false;
     params.found_patterns = &found_patterns;
-    params.exit = &exit;
+    params.exit = &exit;*/
 
 
     std::vector<Node*> stash; //will contain start and end node! Will continously be made several copies.
