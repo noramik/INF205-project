@@ -34,12 +34,11 @@ int main(int argc, char** argv)
 	   for (auto it = path_lbl.begin(); it !=path_lbl.end();it++)
 	   {
 	   std::cout << *it << "\n";
-	   }
-	   /*
+	   }*/
+
 
 	   std::cout << "RUNNING ALGORITHM" <<std::endl;
 
-        //SCENARIO: p and q equal!
 	   std::vector<std::string> p{"is", "has"};
 	   std::vector<std::string> q{"is", "is"};
 	   std::set<std::vector<graph::Node*>> k = g.find_pattern(p, q, true);
