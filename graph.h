@@ -7,6 +7,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <map>
+#include <set>
 
 /*
  * Directed Graph
@@ -85,7 +86,7 @@ namespace graph
 	// Returns the node map.
 	std::map<std::string, Node*> get_nodes() const {return this->nodes;} //Maybe delete, not used anywhere
 	// Returns the edges map
-	std::unordered_map<std::string, std::vector<Edge*> > get_edges() const {return this->edges;}
+	std::unordered_map<std::string, std::vector<Edge*>> get_edges() const {return this->edges;}
 
 	// in method copied from directed-graph example from lecture.
     // read from *source
@@ -101,7 +102,7 @@ namespace graph
 	Node* get_node_pointer_by_unique_label() (?)
     */
 
-    std::vector<std::vector<Node*>> find_pattern(std::vector<std::string> p, std::vector<std::string> q, bool return_nodes=false); //False betyr True/False answer. True betyr finn alle noder og returner med label.
+    std::set<std::vector<Node*>> find_pattern(std::vector<std::string> p, std::vector<std::string> q, bool return_nodes=false); //False betyr True/False answer. True betyr finn alle noder og returner med label.
 
 	~Graph();// Destructor
 	Graph(const Graph& orig); // Copy constructor
@@ -111,7 +112,7 @@ namespace graph
 
 	private:
 	// Unordered map for edges, where label is key, and vector of edge pointers as value.
-	std::unordered_map<std::string, std::vector<Edge*> > edges = std::unordered_map<std::string, std::vector<Edge*> >();
+	std::unordered_map<std::string, std::vector<Edge*>> edges = std::unordered_map<std::string, std::vector<Edge*>>();
 	// Map for nodes, label as key, Node pointer as value.
 	std::map<std::string, Node*> nodes = std::map<std::string, Node*>();
 	int num_edges = 0; // Total number of edges in the graph
