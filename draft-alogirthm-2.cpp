@@ -10,6 +10,7 @@
 //#include <unordered_map>
 
 #include "graph.h"
+#include <mpi.h>
 using namespace graph;
 
 //Helper method, only used by this file?
@@ -407,19 +408,16 @@ void Graph::search_match(Node* node, std::vector<Node*> &stash, int current_inde
 
 
 
-std::set<std::vector<Node*>> Graph::find_pattern(std::vector<std::string> p, std::vector<std::string> q, bool return_nodes) { //return_nodes=false as default
+std::set<std::vector<Node*>> Graph::find_pattern(int rank, int size, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes) { //return_nodes=false as default
+    std::cout << rank << std::endl;
+    std::cout << "Rank above" << std::endl;
 
     // initialize parameters
     Parameters params; //each rank will have its' own.. important! not shared memory
+
     params.return_nodes = return_nodes;
     params.p = p;
     params.q = q;
-
-    //Make global variables for each rank. can this be made before different ranks are running???
-    std::set<std::vector<Node*>> found_patterns;
-    bool exit = false;
-    params.found_patterns = &found_patterns;
-    params.exit = &exit;
 
     auto starting_points = analyse_graph(params);
 
@@ -429,35 +427,50 @@ std::set<std::vector<Node*>> Graph::find_pattern(std::vector<std::string> p, std
     }
 
 
-
-
-/*
-    STEP 2. Deleger startpunkter til ranks (parallellisering) --------------
-
-
-
-
-
-    STEP 3. Start søk ------------------
-    */
-    // Create instance of struct, fill in values and send as reference
-    //Parameters params; //each rank has it's own
-
-    /*
-    //Make global variables for each rank. can this be made before different ranks are running???
-    std::vector<std::vector<Node*>> found_patterns;
+    //Make global variables for each rank
+    std::set<std::vector<Node*>> found_patterns;
     bool exit = false;
     params.found_patterns = &found_patterns;
-    params.exit = &exit;*/
-
+    params.exit = &exit;
 
 
     int current_index = params.start_index; //each recursion need it's own in it's scope
 
-    //SPECIAL CASE: ONLY 1 EDGE IN PATH!
+
+    //STEP 2. Deleger startpunkter til ranks (parallellisering) --------------
+    int num_points = starting_points.size();
+    int a = floor(num_points/size);
+    int b = num_points%size;
+
+
+    std::vector<Edge*> rank_start_points;
+    if (rank < b) {
+        int start_pos = rank+rank*a;
+        for(auto it=starting_points.begin()+start_pos; it != starting_points.begin()+(start_pos + a+1); it++) {
+            std::cout <<" EXTRA ELEMENTS" << std::endl;
+            std::cout <<*it << std::endl;
+            rank_start_points.push_back(*it);
+        }
+    }
+
+    else {
+        int start_pos = a*(rank-b)+b*(a+1);
+        for (auto it=starting_points.begin()+start_pos; it != starting_points.begin()+(start_pos+a); it++) {
+            std::cout <<" OG ELEMENTS" << std::endl;
+            std::cout <<*it << std::endl;
+            rank_start_points.push_back(*it);
+        }
+    }
+
+
+    //STEP 3. Start søk ------------------
+
+    // Create instance of struct, fill in values and send as reference
+    //Parameters params; //each rank has it's own
+
 
     // Find all matching patterns of path_letter (p or q)
-    for (Edge* edge : starting_points) {
+    for (Edge* edge : rank_start_points) {
 
 
         std::vector<Node*> stash; //will contain start and end node! Will continously be made several copies.
@@ -473,32 +486,24 @@ std::set<std::vector<Node*>> Graph::find_pattern(std::vector<std::string> p, std
 
 
 
-    //if p and q are equal: if one pair only occurs once; this is not actually a path... or?
-
-    /*if (params.p == params.q) {
-        break;
-    }*/
-
-
     //----SHOW RESULTS: found_patterns now contain either one set of nodes or several or none at all
     if (params.found_patterns->empty()) {// do not have any containment:
-         std::cout << "No such pattern exists in the graph." << std::endl;;
-         return *params.found_patterns;
+         std::cout << rank<<"No such pattern exists in the graph." << std::endl;
     }
     else if (!return_nodes) {
-        std::cout << "The requested pattern is found!" << std::endl;
+        std::cout << rank << "The requested pattern is found!" << std::endl;
         std::cout << "WARNING: The returned nodes might not be the only nodes connected by these paths" <<"\n"<<
                     "Set parameter return_nodes=true to see all connections."<<std::endl;
-        return *params.found_patterns;
     }
     else {
-        std::cout << "The requested pattern is found! All connections found is as follows:" <<  std::endl;
+        std::cout << rank <<"The requested pattern is found! All connections found is as follows:" <<  std::endl;
 
         for (auto node_pairs: *params.found_patterns) {
             std::cout << "Pair: " << node_pairs[0]->get_label() << " - " << node_pairs[1]->get_label() << std::endl;
          }
-        return *params.found_patterns;
     }
+    //MPI collect or something.....
+    return *params.found_patterns;
 
 
 }

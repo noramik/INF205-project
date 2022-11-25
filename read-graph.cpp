@@ -4,9 +4,21 @@
 
 #include "graph.h"
 #include "path.h"
+#include <mpi.h>
 
 int main(int argc, char** argv)
 {
+       // Initialize parallellization
+       MPI_Init(&argc, &argv);
+
+       // how many processes are there?
+       int size = 0;
+       MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+       // what is the rank of this process?
+       int rank = 0;
+       MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
 
 
 	   assert(argc >= 2);  //Why is this 3, it throws an error, don't know why
@@ -39,8 +51,12 @@ int main(int argc, char** argv)
 
 	   std::cout << "RUNNING ALGORITHM" <<std::endl;
 
-	   std::vector<std::string> p{"is", "has"};
+	   std::vector<std::string> p{"is", "is"};
 	   std::vector<std::string> q{"is", "is"};
-	   std::set<std::vector<graph::Node*>> k = g.find_pattern(p, q, true);
+	   std::set<std::vector<graph::Node*>> k = g.find_pattern(rank, size, p, q, true); //all ranks
 
+
+
+	   MPI_Finalize();
+	   return 0;
 }
