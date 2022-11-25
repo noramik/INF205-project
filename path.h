@@ -24,6 +24,7 @@ void in(std::istream* source);
 
 std::vector<std::string> return_path_labels() const {return this->path_labels;}
 
+
 private:
 std::vector<std::string> path_labels = std::vector<std::string>();
 
