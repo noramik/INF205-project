@@ -12,7 +12,7 @@ using namespace graph;
  * but this seemed the only way I could figure out how to do it without relying on knowing how long the path is.
  */
 
-// Based on query example from directed graph (lecture code)
+// Code from query example from directed graph (lecture code)
 bool Path::read_path(std::string* token, std::istream* source)
 {
 	char single_symbol = '\0';
