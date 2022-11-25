@@ -33,7 +33,7 @@ using namespace graph;
 
 // save variables we will use over and over again instead of sending them back and forth between functions. Place in namespace
 struct Graph::Parameters{
-    std::vector<std::vector<Node*>>* found_patterns; //start and end nodes connected by both p and q in pairs
+    std::set<std::vector<Node*>>* found_patterns; //start and end nodes connected by both p and q in pairs
     Edge* start_edge; //instead of node, where the traversing starts.
     int start_index; //index from sequence of our starting point. BETTER A CONSTANT. but this creates errors...
     bool return_nodes; // user input. constant?
@@ -78,94 +78,90 @@ std::vector<Edge*> Graph::analyse_path_edges(const bool start, Parameters &param
     std::string q_label = (start) ? params.q[0] : params.q.back(); //first element if at the start, otherwise the last element
 
     std::vector<Edge*> start_points; //return vector
-    //std::vector<Edge*> potential_edges; //edges to search among
-    std::vector<std::string> potential_edges; //edges to search among
+    //std::vector<std::string> potential_edges; //edges to search among. MOVED TO for loops
     Node* node;
+    std::vector<Edge*> vec_p = this->get_edges().at(p_label); //copy?
+    std::vector<Edge*> vec_q = this->get_edges().at(q_label);
 
-    auto pointer_to_label = [&] (std::vector<Edge*> edge_pointers) {
+
+
+    //DELETE. Did not work
+    /*
+    auto pointer_to_label = [&] (std::vector<Edge*>&& edge_pointers) {
         //lambda not working 100% correctly
         std::cout << "in lambda"<<std::endl;
-        for (Edge* edge: edge_pointers) {
-            potential_edges.push_back(edge->get_label());
+        std::vector<std::string> potential_edges_lambda; //edges to search among
+        for (auto &edge: edge_pointers) {
+            potential_edges_lambda.push_back(edge->get_label());
         }
-        return potential_edges;
-    }; //local lambda function
+        return potential_edges_lambda;
+    }; //local lambda function*/
+
 
     if (counted_instances[p_label] <= counted_instances[q_label] && counted_instances[p_label] < requirement) {
         //.... check for matching nodes
-        std::cout <<"first-----------------------------------------------------"<< std::endl;
-        //BUG: sometimes the code print this and then do not finish....
 
         params.path_letter = (params.p.size()>= params.q.size()) ? 'p' : 'q'; /*p or q: find which sequence is the largest*/
         params.path = (params.path_letter == 'p') ? params.p : params.q;
         int start_index; //prefer as a const, but this is difficult
 
-        std::cout << this->get_edges().at(p_label).size() <<std::endl;
-        for (Edge* edge_pointer : this->get_edges().at(p_label)) {std::cout << edge_pointer << "\t";}
+        //for (Edge* edge_pointer : this->get_edges().at(p_label)) {std::cout << edge_pointer << "\t";}
+        //for (auto edge_pointer = std::begin(this->get_edges().at(p_label)); edge_pointer != std::end(this->get_edges().at(p_label)); ++edge_pointer) {std::cout << *edge_pointer << "\t";}
+        //for (int i = 0; i < vec.size(); i++) {std::cout << vec[i] << "\t";}
 
 
-        for (Edge* edge_pointer : this->get_edges().at(p_label)) {
-            for (Edge* edge_pointer : this->get_edges().at(p_label)) {std::cout << edge_pointer << "\t";}
-
-
+        //for (Edge* const &edge_pointer : this->get_edges().at(p_label)) { //could it be a mistake here...?
+        //for (auto edge_pointer = this->get_edges().at(p_label).begin(); edge_pointer != this->get_edges().at(p_label).end(); edge_pointer++) {
+        for (int i = 0; i < vec_p.size(); i++) { //for--ranged loop created bug. not sure why. also iterator...
+            //for (Edge* edge_pointer : this->get_edges().at(p_label)) {std::cout << edge_pointer << "\t";}
+            std::vector<std::string> potential_edges; //edges to search among
             if (start) {//if True
-                std::cout << "START" <<std::endl;
-
-                std::cout << edge_pointer << std::endl; //this is sometimes a nullpointer. WHERE IS THE ERROR??? must be fixed asap!
-                std::cout << edge_pointer->get_tail_node()->get_label() << std::endl;
-
-                node = edge_pointer->get_tail_node();
-                std::cout << "**" << std::endl;
+                std::cout << vec_p[i] << std::endl; //this is sometimes a nullpointer. Think this is fixed now
+                node = vec_p[i]->get_tail_node();
                 start_index = 0;
-                std::cout << "*---*" << std::endl;
-                std::cout <<"Control: (should be 0) " << node->get_next_edges().empty() <<std::endl;
-                potential_edges = pointer_to_label(node->get_next_edges());
+                for (auto &i: node->get_next_edges()) {potential_edges.push_back(i->get_label());}
             }
             else { //if at the end
-                std::cout << "END" <<std::endl;
-                node = edge_pointer->get_head_node();
+                node = vec_p[i]->get_head_node();
                 start_index = params.path.size()-1;
-                potential_edges = pointer_to_label(node->get_next_edges());
+                for (auto &i: node->get_next_edges()) {potential_edges.push_back(i->get_label());}
             }
 
             auto it = std::find(potential_edges.begin(), potential_edges.end(), q_label);
             if (it != potential_edges.end()) {// if found
-                start_points.push_back(edge_pointer);
+                start_points.push_back(vec_p[i]);
             }
         }
 
         params.start_index = start_index;
         if (start_points.empty()) *params.exit = true;
-        std::cout <<"Still here"<< std::endl;
         return start_points;
     }
 
     else if (counted_instances[q_label] < requirement) {
         //...check for matching nodes DUPLICATE (create another function?)
-        std::cout <<"----------------------------------------------------"<< std::endl;
 
         params.path_letter = (params.p.size()>= params.q.size()) ? 'p' : 'q'; /*p or q: find which sequence is the largest*/
         params.path = (params.path_letter == 'p') ? params.p : params.q;
         int start_index; //prefer as constant.. how to?
 
-        for (Edge* edge_pointer : this->get_edges().at(q_label)) {
+        //for (Edge* edge_pointer : this->get_edges().at(q_label)) {
+        for (int i = 0; i < vec_q.size(); i++) {
+            std::vector<std::string> potential_edges; //edges to search among
             if (start) {//if True
-                Node* node = edge_pointer->get_tail_node();
-                //std::vector<Edge*> potential_edges = node->get_next_edges();
-                potential_edges = pointer_to_label(node->get_next_edges());
+                Node* node = vec_q[i]->get_tail_node();
+                for (auto &i: node->get_next_edges()) {potential_edges.push_back(i->get_label());}
                 start_index = 0;
             }
             else { //if at the end
-                Node* node = edge_pointer->get_head_node();
-                //std::vector<Edge*> potential_edges = node->get_prev_edges();
-                potential_edges = pointer_to_label(node->get_next_edges());
+                Node* node = vec_q[i]->get_head_node();
+                for (auto &i: node->get_next_edges()) {potential_edges.push_back(i->get_label());}
                 start_index = params.path.size()-1;
             }
 
-            //std::vector<int>::iterator it;
             auto it = std::find(potential_edges.begin(), potential_edges.end(), p_label);
             if (it != potential_edges.end()) {// if found
-                start_points.push_back(edge_pointer);
+                start_points.push_back(vec_q[i]);
             }
         }
 
@@ -314,58 +310,29 @@ std::vector<Edge*> Graph::analyse_graph(Parameters &params) {
 
 void Graph::iterate_forward(Edge* edge, std::vector<Node*> stash, int current_index, Parameters &params) { //COPY stash and index
     /// iterate forward in the graph
-
+    std::cout << "Iterate forward" << std::endl;
     if (current_index == params.path.size()-1) {/*at the end of the path -> start iterating backwards unless the whole pattern is found ->end iterations*/
-        std::cout << "END OF path" << std::endl;
         stash.push_back(edge->get_head_node()); //at the end
 
-        std::cout <<"Innhold i stash :";
-        for (Node* i: stash) {std::cout << i->get_label() << "\t";}
-
-
-
-
         if (stash.size() == 2) {//Start searching for matching path!
-            std::cout << "FINAL JAM" << std::endl;
             current_index = -1; //UPDATW TO THIS EVERYWHERE?
             Parameters copy_params = params; //SHALLOW copy, does this work as wanted? (we want the same poitners)
             copy_params.switch_parameters();
 
-            std::cout << "Copy: " << params.path_letter << ", " << copy_params.path_letter <<std::endl;//works:)
-
-
             search_match(stash[0], stash, current_index, copy_params); //When this continues/returns we are done with this iteration
-            std::cout << " log: Navigating out " << std::endl;
         }
 
         else {/*at the end of the path -> start iterating backwards*/
-            std::cout << "We are wrongly positioned now..." << std::endl;
             int current_index = params.start_index; //update current_index as we are about to move backwards
             iterate_backward(params.start_edge, stash, current_index, params);
         }
-
-        std::cout << "log: before return" << std::endl;
         if (*params.exit) return; //if poitner params->exit return;
-        std::cout << "DON NOT PRINT THISSSSSSSSSSSSSSSSSSS" << std::endl;
 
     }
 
     else if (!edge->get_head_node()->get_next_edges().empty()) {//make sure it is not empty
-
-
-        //testing
-        std::cout << "NOT end of path. Edge: " <<edge->get_label() << std::endl;
-        std::cout << "Node: " <<edge->get_tail_node() <<", "<< edge->get_head_node() << std::endl;
-        std::cout << "Node: " <<edge->get_tail_node()->get_label() <<", "<< edge->get_head_node()->get_label() << std::endl;
-        //testing end
-
-
-
-
         current_index++; //must handle the special case of the first iteration?
         for (Edge* next_edge: edge->get_head_node()->get_next_edges()) {
-
-            std::cout << next_edge << ", " << next_edge->get_label() << " == " << params.path[current_index] << std::endl;
 
             if (next_edge->get_label() == params.path[current_index]) { //a match is found. Double check. what is index now?
                 iterate_forward(next_edge, stash, current_index, params);
@@ -381,7 +348,7 @@ void Graph::iterate_forward(Edge* edge, std::vector<Node*> stash, int current_in
 
 void Graph::iterate_backward(Edge* edge, std::vector<Node*> stash, int current_index, Parameters &params) {
     //we do not go here if we started at index 0
-
+    std::cout << "Iterate backwards" << std::endl;
     if (current_index == 0) {
         stash.insert(stash.begin(), edge->get_tail_node()); //order matters. stash must be (start, end)
         //Start searching for matching path!
@@ -409,15 +376,11 @@ void Graph::iterate_backward(Edge* edge, std::vector<Node*> stash, int current_i
 
 //STASH must contain nodes in the order: (start, end)
 void Graph::search_match(Node* node, std::vector<Node*> &stash, int current_index, Parameters &params) { //?node is the last node in the previously found pattern
-    std::cout << "log: arrived at search_match. node: " << node->get_label()<< "\n";
+    std::cout << "log: arrived at search_match. " << "\n";
 
     if (current_index == params.path.size()-1) {//found an entire path, but does the ending point match?
-        std::cout << "log: at the end of search_match" << "\n";
-        std::cout << "stash_back" <<stash.back()->get_label() << std::endl;
         if (node == stash.back()) { //.back() has O(1) https://www.geeksforgeeks.org/vectorfront-vectorback-c-stl/
-            //obs! can we compare the pointers? or do we have to compare the labels...
-            std::cout << "PATH FOUND!" << std::endl;
-            params.found_patterns->push_back(stash);
+            params.found_patterns->insert(stash);
 
             if (!params.return_nodes) *params.exit = true; //obs! make work with the current copy. pointer solution, does this worl?
                 //..........send to rank 0? but what if only one rank...
@@ -426,13 +389,11 @@ void Graph::search_match(Node* node, std::vector<Node*> &stash, int current_inde
     }
 
     else if (!node->get_next_edges().empty()) { //not empty
-        std::cout << "log: search_match iteration" << current_index <<"\n";
         current_index++; //somethign wrong with this one now (24.11)
 
         for (Edge* edge: node->get_next_edges()) {
 
-            //condition 1: make sure we cannot choose the same path as the original if p and q are the same.
-            if (edge != params.start_edge && edge->get_label() == params.path[current_index]) {
+            if (edge->get_label() == params.path[current_index]) {
                 search_match(edge->get_head_node(), stash, current_index, params);
                 if (*params.exit) return;
             }
@@ -446,7 +407,7 @@ void Graph::search_match(Node* node, std::vector<Node*> &stash, int current_inde
 
 
 
-std::vector<std::vector<Node*>> Graph::find_pattern(std::vector<std::string> p, std::vector<std::string> q, bool return_nodes) { //return_nodes=false as default
+std::set<std::vector<Node*>> Graph::find_pattern(std::vector<std::string> p, std::vector<std::string> q, bool return_nodes) { //return_nodes=false as default
 
     // initialize parameters
     Parameters params; //each rank will have its' own.. important! not shared memory
@@ -455,7 +416,7 @@ std::vector<std::vector<Node*>> Graph::find_pattern(std::vector<std::string> p, 
     params.q = q;
 
     //Make global variables for each rank. can this be made before different ranks are running???
-    std::vector<std::vector<Node*>> found_patterns;
+    std::set<std::vector<Node*>> found_patterns;
     bool exit = false;
     params.found_patterns = &found_patterns;
     params.exit = &exit;
@@ -467,9 +428,6 @@ std::vector<std::vector<Node*>> Graph::find_pattern(std::vector<std::string> p, 
         return *params.found_patterns;
     }
 
-        //TESTING
-    for (auto edge: starting_points) {std::cout << edge->get_label() << "\n";}
-    std::cout << "STARTING POINTS: " << starting_points.empty() << std::endl;
 
 
 
@@ -507,12 +465,20 @@ std::vector<std::vector<Node*>> Graph::find_pattern(std::vector<std::string> p, 
 
         params.start_edge = edge; //COPY
         if (params.start_index == 0) stash.push_back(edge->get_tail_node()); //if we start at the beginning //recursion will handle all else cases
-        std::cout << "BEFORE ITERATION: " << edge <<", "<< params.start_edge<< std::endl;
 
         //using recursive function to iterate trough graph until patterns are found or not found
         iterate_forward(edge, stash, current_index, params);
         if (*params.exit) break;
     }
+
+
+
+    //if p and q are equal: if one pair only occurs once; this is not actually a path... or?
+
+    /*if (params.p == params.q) {
+        break;
+    }*/
+
 
     //----SHOW RESULTS: found_patterns now contain either one set of nodes or several or none at all
     if (params.found_patterns->empty()) {// do not have any containment:
