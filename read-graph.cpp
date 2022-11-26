@@ -51,12 +51,19 @@ int main(int argc, char** argv)
 
 	   std::cout << "RUNNING ALGORITHM" <<std::endl;
 
-	   std::vector<std::string> p{"is", "is"};
+	   std::vector<std::string> p{"is", "has"};
 	   std::vector<std::string> q{"is", "is"};
 	   std::set<std::vector<graph::Node*>> k = g.find_pattern(rank, size, p, q, true); //all ranks
 
+        MPI_Finalize();
+
+        std::cout <<"is empty: " <<k.empty()<<std::endl;
+        for (auto node_pairs: k) {
+            std::cout << "Pair: " << node_pairs[0]->get_label() << " - " << node_pairs[1]->get_label() << std::endl;
+         }
 
 
-	   MPI_Finalize();
+
+
 	   return 0;
 }
