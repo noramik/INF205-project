@@ -5,6 +5,7 @@
 #include <vector>
 #include <iterator>
 #include <set>
+#include <cstring>
 #include <string>
 
 //#include <unordered_map>
@@ -408,7 +409,7 @@ void Graph::search_match(Node* node, std::vector<Node*> &stash, int current_inde
 
 
 
-std::set<std::vector<Node*>> Graph::find_pattern(int rank, int size, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes) { //return_nodes=false as default
+std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes) { //return_nodes=false as default
     std::cout << rank << std::endl;
     std::cout << "Rank above" << std::endl;
 
@@ -439,8 +440,8 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int size, std::vector
 
     //STEP 2. Deleger startpunkter til ranks (parallellisering) --------------
     int num_points = starting_points.size();
-    int a = floor(num_points/size);
-    int b = num_points%size;
+    int a = floor(num_points/num_ranks);
+    int b = num_points%num_ranks;
 
 
     std::vector<Edge*> rank_start_points;
@@ -485,6 +486,128 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int size, std::vector
     }
 
 
+
+    // COLLECT ALL NODES ON RANK 0 (root)
+
+    // step 1: Figure out how many nodes each rank has found. This is the number of elements each rank will send to rank 0
+
+    if (rank) {
+        int num_nodes = params.found_patterns->size()*2;
+        MPI_Send(&num_nodes, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
+
+        // for each pair in set
+        //for (auto it=*params.found_patterns->begin(); it != *params.found_patterns->end(); ++it) {
+        for (auto it : *params.found_patterns) {
+            //for each node in pair
+            for (auto node : it) {
+
+                const char* str = node->get_label().c_str();
+                int str_len = strlen(str);
+                MPI_Send(&str_len, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);
+            }
+        }
+    }
+
+
+
+
+    //TEST on one rank
+    /*
+    if (rank==1) {
+        //std::string ONE_LABEL = (*params.found_patterns->begin())[0]->get_label();
+        std::string ONE_LABEL = "ertetre her";
+        std::cout << "TESTER: " << ONE_LABEL << std::endl;
+        const char* str = ONE_LABEL.c_str();
+        std::cout << "TESTER: " << str << std::endl;
+        std::cout << "TESTER: " << strlen(str) << std::endl;
+        MPI_Send(str, strlen(str)+1, MPI_CHAR, 0, 1, MPI_COMM_WORLD);
+    }*/
+
+
+
+    // GATHERING
+    if (rank == 0) {
+        std::map<int, int> recv_num_nodes; //number of nodes to recieve
+
+        std::map<int, std::vector<int>> recv_len; //length of each node-label to recieve
+        int temp; //temporary storage
+
+        //add num_nodes to map from each rank
+        for (int _rank=1; _rank<num_ranks; _rank++) {
+
+            // number of nodes
+            MPI_Recv(&recv_num_nodes[_rank], 1, MPI_INT, _rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+            // length of node labels
+            for (int pos = 0; pos < recv_num_nodes[_rank]; pos++) {
+                MPI_Recv(&temp, 1, MPI_INT, _rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                std::cout << "TEMP: " << temp << std::endl;
+                recv_len[_rank].push_back(temp);
+            }
+        }
+
+        std::cout << "----------------------------------" << std::endl;
+        for (auto pair: recv_num_nodes) {std::cout<< pair.first << ", " <<pair.second << std::endl;}
+
+
+        for (auto pair: recv_len) {std::cout<< pair.first << ", " <<pair.second[1] << std::endl;}
+
+
+
+
+        // gathering node labels
+        /*char str[4];
+
+        MPI_Recv(str, 12, MPI_CHAR, 1, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+        std::cout << "FINISH: "<< str << std::endl;
+
+        for (int rank=1; rank<num_ranks; rank++) {
+            for (int i=0; i<recv_num_nodes[rank]; i++) {
+                std::cout << "..." << std::endl;
+                //MPI_Recv()
+            }
+        }*/
+
+             // REMEMBER TO ADD NODES FOUND ON RANK 0 to vector as well
+    }
+
+
+
+
+
+
+
+
+
+    //COLLECT RESULTS
+    /*MPI_Gather(
+        void* send_data, //start address of send buffer
+        int send_count, //sizeof(array)
+        MPI_CHAR, //MPI_Datatype send_datatype,
+        void* recv_data, //recieve array
+        int recv_count,
+        MPI_CHAR, //MPI_Datatype recv_datatype,
+        0, //int root
+        MPI_COMM_WORLD) //MPI_Comm */
+    //
+
+    /*int MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                void *recvbuf, const int *recvcounts, const int *displs,
+                MPI_Datatype recvtype, int root, MPI_Comm comm)*/
+
+    /*MPI_Gatherv(//start address of send buffer,
+                1, //int sendcount
+                MPI_CHAR,
+                //address of recieve buffer,
+                //recieve count . differs.
+                //int displacement,
+                MPI_CHAR,
+                0,
+                MPI_COMM_WORLD)*/
+
+
+    //collect recieve array in pairs, and translate to nodes
 
     //----SHOW RESULTS: found_patterns now contain either one set of nodes or several or none at all
     if (params.found_patterns->empty()) {// do not have any containment:
