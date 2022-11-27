@@ -10,6 +10,8 @@
 //#include <unordered_map>
 
 #include "graph.h"
+#include <omp.h>
+
 using namespace graph;
 
 //Helper method, only used by this file?
@@ -380,7 +382,13 @@ void Graph::search_match(Node* node, std::vector<Node*> &stash, int current_inde
 
     if (current_index == params.path.size()-1) {//found an entire path, but does the ending point match?
         if (node == stash.back()) { //.back() has O(1) https://www.geeksforgeeks.org/vectorfront-vectorback-c-stl/
+
+            #pragma omp critical
+            {
             params.found_patterns->insert(stash);
+            }
+            int thread_id = omp_get_thread_num();
+            std::cout <<"FOUND: " << thread_id << std::endl;
 
             if (!params.return_nodes) *params.exit = true; //obs! make work with the current copy. pointer solution, does this worl?
                 //..........send to rank 0? but what if only one rank...
@@ -407,7 +415,7 @@ void Graph::search_match(Node* node, std::vector<Node*> &stash, int current_inde
 
 
 
-std::set<std::vector<Node*>> Graph::find_pattern(std::vector<std::string> p, std::vector<std::string> q, bool return_nodes) { //return_nodes=false as default
+std::set<std::vector<Node*>> Graph::find_pattern(int num_ranks, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes) { //return_nodes=false as default
 
     // initialize parameters
     Parameters params; //each rank will have its' own.. important! not shared memory
@@ -440,24 +448,46 @@ std::set<std::vector<Node*>> Graph::find_pattern(std::vector<std::string> p, std
 
     STEP 3. Start søk ------------------
     */
-    // Create instance of struct, fill in values and send as reference
-    //Parameters params; //each rank has it's own
-
-    /*
-    //Make global variables for each rank. can this be made before different ranks are running???
-    std::vector<std::vector<Node*>> found_patterns;
-    bool exit = false;
-    params.found_patterns = &found_patterns;
-    params.exit = &exit;*/
 
 
+    #pragma omp parallel
+    {
+    int current_index = params.start_index; //each recursion need it's own in it's scope (private label)
+    int thread_id = omp_get_thread_num();
 
-    int current_index = params.start_index; //each recursion need it's own in it's scope
+    //find starting points
+    int num_points = starting_points.size();
+    int a = floor(num_points/num_ranks);
+    int b = num_points%num_ranks;
+
+
+    std::vector<Edge*> rank_start_points;
+    if (thread_id < b) {
+        int start_pos = thread_id+thread_id*a;
+        for(auto it=starting_points.begin()+start_pos; it != starting_points.begin()+(start_pos + a+1); it++) {
+            rank_start_points.push_back(*it);
+        }
+    }
+
+    else {
+        int start_pos = a*(thread_id-b)+b*(a+1);
+        for (auto it=starting_points.begin()+start_pos; it != starting_points.begin()+(start_pos+a); it++) {
+            rank_start_points.push_back(*it);
+        }
+    }
+
+
+
+
+
+
 
     //SPECIAL CASE: ONLY 1 EDGE IN PATH!
 
     // Find all matching patterns of path_letter (p or q)
-    for (Edge* edge : starting_points) {
+    //use formula to extract starting points
+    //....
+    for (Edge* edge : rank_start_points) {
 
 
         std::vector<Node*> stash; //will contain start and end node! Will continously be made several copies.
@@ -471,13 +501,7 @@ std::set<std::vector<Node*>> Graph::find_pattern(std::vector<std::string> p, std
         if (*params.exit) break;
     }
 
-
-
-    //if p and q are equal: if one pair only occurs once; this is not actually a path... or?
-
-    /*if (params.p == params.q) {
-        break;
-    }*/
+    } //pragma end
 
 
     //----SHOW RESULTS: found_patterns now contain either one set of nodes or several or none at all

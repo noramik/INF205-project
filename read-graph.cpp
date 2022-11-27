@@ -4,6 +4,7 @@
 
 #include "graph.h"
 #include "path.h"
+#include <omp.h>
 
 int main(int argc, char** argv)
 {
@@ -11,12 +12,19 @@ int main(int argc, char** argv)
 
 	   assert(argc >= 2);  //Why is this 3, it throws an error, don't know why
 
+        int num_threads = 1;
+        num_threads = std::atoi(argv[2]);
+        omp_set_num_threads(num_threads);
+
+
 	   std::ifstream indata(argv[1]);
 	   if(!indata)
 	   {
 	      std::cerr << "Error! File " << argv[1] << " cannot be read.\n";
 	      //return EXIT_FAILURE;
 	   }
+
+
 	   graph::Graph g;
 	   indata >> g;
 	   std::cout << g;
@@ -39,8 +47,8 @@ int main(int argc, char** argv)
 
 	   std::cout << "RUNNING ALGORITHM" <<std::endl;
 
-	   std::vector<std::string> p{"is", "has"};
+	   std::vector<std::string> p{"is", "is"};
 	   std::vector<std::string> q{"is", "is"};
-	   std::set<std::vector<graph::Node*>> k = g.find_pattern(p, q, true);
+	   std::set<std::vector<graph::Node*>> k = g.find_pattern(num_threads, p, q, true);
 
 }
