@@ -12,6 +12,7 @@
 
 #include "graph.h"
 #include <mpi.h>
+
 using namespace graph;
 
 //Helper method, only used by this file?
