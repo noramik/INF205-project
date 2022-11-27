@@ -87,19 +87,6 @@ std::vector<Edge*> Graph::analyse_path_edges(const bool start, Parameters &param
 
 
 
-    //DELETE. Did not work
-    /*
-    auto pointer_to_label = [&] (std::vector<Edge*>&& edge_pointers) {
-        //lambda not working 100% correctly
-        std::cout << "in lambda"<<std::endl;
-        std::vector<std::string> potential_edges_lambda; //edges to search among
-        for (auto &edge: edge_pointers) {
-            potential_edges_lambda.push_back(edge->get_label());
-        }
-        return potential_edges_lambda;
-    }; //local lambda function*/
-
-
     if (counted_instances[p_label] <= counted_instances[q_label] && counted_instances[p_label] < requirement) {
         //.... check for matching nodes
 
@@ -118,7 +105,6 @@ std::vector<Edge*> Graph::analyse_path_edges(const bool start, Parameters &param
             //for (Edge* edge_pointer : this->get_edges().at(p_label)) {std::cout << edge_pointer << "\t";}
             std::vector<std::string> potential_edges; //edges to search among
             if (start) {//if True
-                std::cout << vec_p[i] << std::endl; //this is sometimes a nullpointer. Think this is fixed now
                 node = vec_p[i]->get_tail_node();
                 start_index = 0;
                 for (auto &i: node->get_next_edges()) {potential_edges.push_back(i->get_label());}
@@ -312,7 +298,6 @@ std::vector<Edge*> Graph::analyse_graph(Parameters &params) {
 
 void Graph::iterate_forward(Edge* edge, std::vector<Node*> stash, int current_index, Parameters &params) { //COPY stash and index
     /// iterate forward in the graph
-    std::cout << "Iterate forward" << std::endl;
     if (current_index == params.path.size()-1) {/*at the end of the path -> start iterating backwards unless the whole pattern is found ->end iterations*/
         stash.push_back(edge->get_head_node()); //at the end
 
@@ -350,7 +335,6 @@ void Graph::iterate_forward(Edge* edge, std::vector<Node*> stash, int current_in
 
 void Graph::iterate_backward(Edge* edge, std::vector<Node*> stash, int current_index, Parameters &params) {
     //we do not go here if we started at index 0
-    std::cout << "Iterate backwards" << std::endl;
     if (current_index == 0) {
         stash.insert(stash.begin(), edge->get_tail_node()); //order matters. stash must be (start, end)
         //Start searching for matching path!
@@ -378,7 +362,6 @@ void Graph::iterate_backward(Edge* edge, std::vector<Node*> stash, int current_i
 
 //STASH must contain nodes in the order: (start, end)
 void Graph::search_match(Node* node, std::vector<Node*> &stash, int current_index, Parameters &params) { //?node is the last node in the previously found pattern
-    std::cout << "log: arrived at search_match. " << "\n";
 
     if (current_index == params.path.size()-1) {//found an entire path, but does the ending point match?
         if (node == stash.back()) { //.back() has O(1) https://www.geeksforgeeks.org/vectorfront-vectorback-c-stl/
@@ -388,7 +371,6 @@ void Graph::search_match(Node* node, std::vector<Node*> &stash, int current_inde
             params.found_patterns->insert(stash);
             }
             int thread_id = omp_get_thread_num();
-            std::cout <<"FOUND: " << thread_id << std::endl;
 
             if (!params.return_nodes) *params.exit = true; //obs! make work with the current copy. pointer solution, does this worl?
                 //..........send to rank 0? but what if only one rank...
