@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <cassert>
+#include <chrono>
 
 #include "graph.h"
 #include "path.h"
@@ -51,16 +52,27 @@ int main(int argc, char** argv)
 
 	   std::cout << "RUNNING ALGORITHM" <<std::endl;
 
-	   std::vector<std::string> p{"is", "has"};
+	   std::vector<std::string> p{"is", "is"};
 	   std::vector<std::string> q{"is", "is"};
-	   std::set<std::vector<graph::Node*>> k = g.find_pattern(rank, size, p, q, true); //all ranks
 
+
+        int num_tests = 1000;
+
+	   auto t0 = std::chrono::high_resolution_clock::now();
+	   for (int i=0; i<num_tests; i++) {
+            std::set<std::vector<graph::Node*>> k = g.find_pattern(rank, size, p, q, false); //all ranks
+	   }
         MPI_Finalize();
+        auto t1 = std::chrono::high_resolution_clock::now();
+        std::cout << "Time measurement: " << std::chrono::duration_cast<std::chrono::microseconds>(t1-t0).count()/ (double)num_tests << "ms" << std::endl;
 
+
+
+        /*
         std::cout <<"is empty: " <<k.empty()<<std::endl;
         for (auto node_pairs: k) {
             std::cout << "Pair: " << node_pairs[0]->get_label() << " - " << node_pairs[1]->get_label() << std::endl;
-         }
+         }*/
 
 
 

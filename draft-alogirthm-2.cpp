@@ -138,6 +138,7 @@ std::vector<Edge*> Graph::analyse_path_edges(const bool start, Parameters &param
 
         params.start_index = start_index;
         if (start_points.empty()) *params.exit = true;
+
         return start_points;
     }
 
@@ -169,7 +170,7 @@ std::vector<Edge*> Graph::analyse_path_edges(const bool start, Parameters &param
         }
 
         params.start_index = start_index;
-        if (start_points.empty()) *params.exit = true;
+        if (start_points.empty()) {*params.exit = true;}
         return start_points;
         // DUPLICATE END
     }
@@ -455,7 +456,6 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
         }
     }
 
-
     //STEP 3. Start søk ------------------
 
     // Create instance of struct, fill in values and send as reference
@@ -500,7 +500,6 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
                 MPI_Send(&str_len, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);
 
                 //send label
-                std::cout << "SENDING: rank " << rank << str << std::endl;
                 MPI_Send(str, str_len+1, MPI_CHAR, 0, 2, MPI_COMM_WORLD);
 
             }
@@ -531,7 +530,6 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
             for (int pos = 0; pos < recv_num_nodes[_rank]; pos++) {
                     //does not send or recieve 0 if no nodes..
                 MPI_Recv(&temp, 1, MPI_INT, _rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                std::cout << "TEMP: " << temp << std::endl;
                 recv_len[_rank].push_back(temp);
             }
         }
@@ -544,9 +542,7 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
             for (int len : map_it.second) {
 
                 char str[len+1]; //char adds '\0' which is wy we add 1
-                std::cout << map_it.first << std::endl;
                 MPI_Recv(str, len+1, MPI_CHAR, map_it.first, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                std::cout<<"RECIEVED: " <<str<<std::endl;
 
                 //find node
                 temp_pair.push_back(this->get_nodes()[str]); //not pair
