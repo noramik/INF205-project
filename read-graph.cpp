@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <cassert>
+#include <chrono>
 
 #include "graph.h"
 #include "path.h"
@@ -49,6 +50,15 @@ int main(int argc, char** argv)
 
 	   std::vector<std::string> p{"is", "is"};
 	   std::vector<std::string> q{"is", "is"};
-	   std::set<std::vector<graph::Node*>> k = g.find_pattern(num_threads, p, q, true);
 
+	   int num_tests = 1000;
+
+	   auto t0 = std::chrono::high_resolution_clock::now();
+
+	   for (int i=0; i<num_tests; i++) {
+          std::set<std::vector<graph::Node*>> k = g.find_pattern(num_threads, p, q, false);
+	   }
+
+	   auto t1 = std::chrono::high_resolution_clock::now();
+       std::cout << "Time measurement: " << std::chrono::duration_cast<std::chrono::microseconds>(t1-t0).count()/ (double)num_tests << "ms" << std::endl;
 }
