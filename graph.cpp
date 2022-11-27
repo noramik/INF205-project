@@ -12,7 +12,7 @@ using namespace graph;
 		if (this->nodes.find(node_label) == this->nodes.end()) //Checks whether the node already exists in the nodes map, if it doesn't it creates it.
 		{
 			Node* new_node = new Node(node_label); // This need to be on the heap because we want the actual new_node to be returned, not a copy of it
-			this->nodes.insert({node_label, new_node});
+			this->nodes.insert({node_label, new_node}); // Inserting the node* into the nodes map, with node_label as the key.
 			return new_node;
 		}
 		else
@@ -21,14 +21,13 @@ using namespace graph;
 		}
 	}
 
-	void Graph::create_edge(std::string edge_label, std::string tail_node_name, std::string head_node_name) //We need head_node and tail_node here right? Or else we have an edge
-	// that doesn't connect anything.
+	void Graph::create_edge(std::string edge_label, std::string tail_node_name, std::string head_node_name)
 	{
         Node* tail_node = this->create_node(tail_node_name);
 		Node* head_node = this->create_node(head_node_name);
 
 
-		Edge* new_edge = new Edge(edge_label, head_node, tail_node); // is this pointer handled safely? When does it get deallocated? With the graph object?
+		Edge* new_edge = new Edge(edge_label, head_node, tail_node);
 		tail_node->append_next_edges(new_edge);
 		head_node->append_prev_edges(new_edge); // Would this be correct?
 
@@ -36,13 +35,13 @@ using namespace graph;
 		{
 			std::vector<Edge*> e; // intializes vector of Edge*
 			e.push_back(new_edge); //Adds new_edge to vector
-			this->edges.insert({edge_label, e});
-			this->num_edges++;
+			this->edges.insert({edge_label, e}); // inserts into the edges map with edge_label as key and the vector of Edge* as value.
+			this->num_edges++; // Counts the total number of edges in the graph.
 		}
 		else
 		{
-			this->edges.at(edge_label).push_back(new_edge);
-			this->num_edges++;
+			this->edges.at(edge_label).push_back(new_edge); // If the edge_label already exists, the new_edge is just being added to the vector.
+			this->num_edges++; // Counts the total number of edges in the graph.
 		}
 
 
@@ -52,9 +51,9 @@ using namespace graph;
 	// Destructor
 	Graph::~Graph()
 	{
-		// This I basically just took from undir-inclist-graph.cpp
+
 		 // debug output
-		   std::clog << "\tlog output: calling UndirInclistGraph destructor\n\t\t(this == " << this << ")\n";
+		   std::clog << "\tlog output: calling Graph destructor\n\t\t(this == " << this << ")\n";
 
 		   // Access the vector of Edge*, then iterate through each Edge* element in that vector and deallocate.
 		   for (auto iter = this->edges.begin(); iter != this->edges.end(); iter++)
@@ -62,24 +61,22 @@ using namespace graph;
 			   std::vector<Edge*> edge_vector = iter->second;
 			   for (auto x=edge_vector.begin(); x != edge_vector.end(); x++)
 				   {
-				   delete *x; // Not sure if this works or not, but at least no error messages.
+				   delete *x; //Deleting the edge. This is being dereferenced because we want to delete the edge pointer not the iterator.
 				   }
 		   }
 
-		   this->edges.clear(); // Not sure if this is needed, clears the whole map, both key and val.
+		   this->edges.clear(); // Clears the whole map.
 
 		   // Deleting Node* on the heap
-		   // Do I need to delete the key as well? that shouldn't be on the heap though? It's just std::string
 		   for (auto iter = this->nodes.begin(); iter != this->nodes.end(); iter++)
 			   {
 				   Node* node = iter->second;
-
-				   delete node; // Not sure if this works or not, but at least no error messages. Does this actually destroy the node itself or just the pointer to it?
+				   delete node; // Deleting the node.
 			   }
-		   this->nodes.clear(); // Not sure if this is needed, clears the whole map, both key and val.
+		   this->nodes.clear(); // Clears the whole map.
 
 
-		//Need to remember to delete the pointers from Node and Edge class as well
+
 	}
 
 	//Copy constructor
@@ -96,7 +93,11 @@ using namespace graph;
 			}
 		}
 
-        // COMMENT from Hanna: blir ikke nodene opprettet samtidig som edgene?
+		/* Since the nodes are being created by the create_edge function if they don't already exist, we wouldn't in most cases
+		 * need a way to create the nodes on their own. The only case that would be needed is if we have any 'loose nodes',
+		 * meaning nodes that don't have any edges. We have chosen to copy the nodes in this case,
+		 * but one could argue against doing that as well.
+		 */
 		for (auto i = orig.nodes.begin(); i != orig.nodes.end(); i++)
 		{
 			this->create_node(i->first); //Do I need this
@@ -106,7 +107,6 @@ using namespace graph;
 	}
 
 	// Copy assignment
-	// Temp version, currently not working
 	Graph& Graph::operator=(const Graph& rhs)
 	{
 
@@ -125,14 +125,14 @@ using namespace graph;
 				   delete *vec_it;
 			   }
 		   }
-		   this->edges.clear(); // Clears the whole unordered map, keys and vals
+		   this->edges.clear(); // Clears the whole unordered map, keys and values
 
 			// Deleting nodes
 			for (auto it = this->nodes.begin(); it !=this->nodes.end(); it++)
 			{
 				delete it->second;
 			}
-			this->nodes.clear(); // Clears the whole nodes map, both keys and vals
+			this->nodes.clear(); // Clears the whole nodes map, both keys and values
 
 
 		   //Copying from rhs
@@ -152,7 +152,7 @@ using namespace graph;
 
 	}
 
-	// Implementation from lecture code - directed-graph, with slight modifications
+	// Implementation from lecture code - directed-graph, with minor changes.
 	// create a single edge based on information from the stream
 	// if it fails, return false, otherwise return true
 	bool Graph::generate_graph_from(std::istream* source)
