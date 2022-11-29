@@ -32,9 +32,10 @@ int main(int argc, char** argv)
 
 	   assert(argc >= 2);  //Why is this 3, it throws an error, don't know why
 
-        int num_threads = 1;
-        num_threads = std::atoi(argv[2]);
-        //omp_set_num_threads(num_threads); // OpenMP Solution ---------------
+        // OpenMP Solution ---------------
+        //int num_threads = 1;
+        //num_threads = std::atoi(argv[2]);
+        //omp_set_num_threads(num_threads);
 
 
 	   std::ifstream indata(argv[1]);
@@ -67,7 +68,7 @@ int main(int argc, char** argv)
 
 	   std::cout << "RUNNING ALGORITHM" <<std::endl;
 	   std::vector<std::string> p{"is", "is"};
-	   std::vector<std::string> q{"is", "has"};
+	   std::vector<std::string> q{"is", "is"};
 
        int num_tests = 1000;
 

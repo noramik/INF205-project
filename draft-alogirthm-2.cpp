@@ -16,10 +16,6 @@
 
 using namespace graph;
 
-//Helper method, only used by this file?
-// Alternatively. Have in a separate file potentially with namespace graph or smoething else like analyze
-
-
 
     //STEP 1: ANALYSE ----------------
     /*
@@ -35,24 +31,32 @@ using namespace graph;
         1.2.3 else velg laveste antall av forekomst i den lengste pathen */
 
 
-// save variables we will use over and over again instead of sending them back and forth between functions. Place in namespace
+
+/// Common variables all iterations/recursions need access to.
+// Rather than sending many variables as inputarguments for each recursion, they are stored together in a structure.
 struct Graph::Parameters{
+
+    Edge* start_edge;    //traversal starts here. Updated for each starting point
+    int start_index;     //starting index in sequence. Used to orient traversals
+    bool return_nodes;   // user input
+
+    // "found_patterns" and "exit" are global pointers for all instances of the structure for each rank
+    // The variables are common for all instances.
     std::set<std::vector<Node*>>* found_patterns; //start and end nodes connected by both p and q in pairs
-    Edge* start_edge; //instead of node, where the traversing starts.
-    int start_index; //index from sequence of our starting point. BETTER A CONSTANT. but this creates errors...
-    bool return_nodes; // user input. constant?
-    bool* exit; //change to true if p-q match found AND return_nodes=false. Then efficiently exit all recursion. "global"
+    bool* exit; //set to true if pattern match is found and "return_nodes" is false.\
+                  Used to exit recursions efficiently.
 
     char path_letter; // p or q
-    std::vector<std::string> p;
-    std::vector<std::string> q;
-    std::vector<std::string> path; //could point to this->p or this->q...
+    std::vector<std::string> p;     // first sequence from user input
+    std::vector<std::string> q;     // second sequence from user input
+    std::vector<std::string> path;  // current path we are traversing. Is either p or q above
 
+    // Change path and path_letter to the opposite of what we currently have.
+    // Used before the search for the second path (if the first is found) as it is unknown wether this is p or q.
     void switch_parameters() {
-        this->path_letter = (this->path_letter == 'p') ? 'q' : 'p'; //single quotes because char and not string
+        this->path_letter = (this->path_letter == 'p') ? 'q' : 'p';
         this->path = (this->path_letter == 'p') ? this->p : this->q;
     }
-
 };
 
 
@@ -60,6 +64,7 @@ std::vector<Edge*> Graph::analyse_path_edges(const bool start, Parameters &param
     /// We find nodes connected to both p_label and q_label if the edge with the fewest appearances is lower than a mathematical requirement
     /// p_label and q_label are both either the first or last edges in sequence p and q.
     /// place == True if at the beginning of the sequence, False if at the end
+
 
     int requirement = floor (this->get_num_edges()/3); ///Must choose this math carefully. Dummy value now. REPLACE this->tot_num_edges
     std::string p_label = (start) ? params.p[0] : params.p.back(); //first element if at the start, otherwise the last element
@@ -79,13 +84,6 @@ std::vector<Edge*> Graph::analyse_path_edges(const bool start, Parameters &param
         params.path = (params.path_letter == 'p') ? params.p : params.q;
         int start_index; //prefer as a const, but this is difficult
 
-        //for (Edge* edge_pointer : this->get_edges().at(p_label)) {std::cout << edge_pointer << "\t";}
-        //for (auto edge_pointer = std::begin(this->get_edges().at(p_label)); edge_pointer != std::end(this->get_edges().at(p_label)); ++edge_pointer) {std::cout << *edge_pointer << "\t";}
-        //for (int i = 0; i < vec.size(); i++) {std::cout << vec[i] << "\t";}
-
-
-        //for (Edge* const &edge_pointer : this->get_edges().at(p_label)) { //could it be a mistake here...?
-        //for (auto edge_pointer = this->get_edges().at(p_label).begin(); edge_pointer != this->get_edges().at(p_label).end(); edge_pointer++) {
         for (int i = 0; i < vec_p.size(); i++) { //for--ranged loop created bug. not sure why. also iterator...
             //for (Edge* edge_pointer : this->get_edges().at(p_label)) {std::cout << edge_pointer << "\t";}
             std::vector<std::string> potential_edges; //edges to search among
@@ -152,60 +150,85 @@ std::vector<Edge*> Graph::analyse_path_edges(const bool start, Parameters &param
     }
 };
 
-std::vector<Edge*> Graph::analyse_graph(Parameters &params) {
-    ///Returns : starting points. structure params will hold the rest of the information (which sequence, index ...)
-    std::vector<Edge*> start_points; //return vector
 
-    // create map with keys as edge labels and number of instances as value
+
+/**
+ * Perform analysis of graph to find optimal starting points before traversing the graph for patterns.
+ * (read: optimal - reducing starting points significantly compared to a random search)
+ *
+ * @param[out] vector of pointers which will operate as starting points for the pattern search traversals
+ * @param[out] params, structure filled with important information for traversals
+ * @param[in]  params, a structure holding some general information
+*/
+/*
+ * General idea for analysis:
+    * Fewer instances of edge labels in the graph are prioritized as starting point
+    * The longer sequence of p and q are prioritized (likely to have fewer occurences in the graph)
+    The fewer starting points the less traversing is neccessary.
+
+ * The analysis consists of the following main steps:
+    1. Count number of instances of all the unique edge labels given in sequences p and q from the user.
+       If a label is not found in the graph, the code terminates with an error message.
+    1.1 Special occurence observed: An edge label only appears once in the graph.
+        This is immediately chosen as starting point and analysis returns the necessary information to start traversing.
+*/
+std::vector<Edge*> Graph::analyse_graph(Parameters &params) {
+    std::vector<Edge*> start_points;  // vector to be returned
+
+    // Step 1
+    // -------
+    // Map with edge labels as keys and their number of instances in the graph as value
     std::map<std::string,int> counted_instances;
 
-    // Extract all unique labels. THIS PART IS NOT NECCESSARY TO REPEAT. Add as a part of graph pulic???
+    // Extract all unique labels from input sequences p and q
     std::set<std::string> unique_labels;
     std::merge(params.p.begin(), params.p.end(),
                 params.q.begin(), params.q.end(),
                 std::inserter(unique_labels, unique_labels.begin()));
 
-
+    // Count number of instances and add to map "counted_instances"
     for (auto edge_label: unique_labels) {
 
-        int num_instances;
+        int num_instances; // temporary holds number of instances of different edge labels
+
         // catch error if given label does not exist in the graph
         try {
-            num_instances = this->get_edges().at(edge_label).size();/*length of list belonging to map edges in graph*/; //at because we KNOW this will be here
+            num_instances = this->get_edges().at(edge_label).size(); // length of extracted list == number of instances
         }
-        catch (const std::out_of_range& oor){//{ //.at() will throw an out_of_range error
-            std::cerr << "InputError: The provided label '"<<edge_label<< "' does not exist in the graph." << std::endl;
-            //std::cerr << "Out of Range error: " << oor.what() << '\n';
+        catch (const std::out_of_range& oor){ //.at() will throw an out_of_range error if edge label does not occur as a key
+            std::cerr << "InputError: The provided label '" << edge_label << "' does not exist in the graph." << std::endl;
             return start_points;
         }
 
-        // Special case; If we have any unique edges, we choose the first appearance and stop the analysis
-        if (num_instances == 1) {/* find which sequence this label is in (p or q), prioritize the longest one*/
+        // Step 1.1: Chose unique occurence as starting point
+        // If label occurs in both p and q, the longest sequence will be chosen
+        if (num_instances == 1) {
 
-            //duplicated later
-            char sequence_letter; /* find which sequence this label is in (p or q), start searching in the longest one*/
-            int start_index; /*the index in the path for the starting point*/ //WOULD PREFER THIS TO BE A CONSTANT
+            //REMOVE duplicated later
+            char path_letter; // the sequence containing the label
+            int start_index; // indexposition in the path "path_letter" for the label
 
+            // Find occurence of the label in p or q and choose starting sequence
             auto it_p = std::find(params.p.begin(), params.p.end(), edge_label);
             auto it_q = std::find(params.q.begin(), params.q.end(), edge_label);
 
-            if (params.p.size() >= params.q.size() && it_p != params.p.end()) {
-                sequence_letter = 'p';
-                start_index = it_p - params.p.begin(); // Code for finding index!
+            if (params.p.size() >= params.q.size() && it_p != params.p.end()) { // if label in the longest sequence
+                path_letter = 'p';
+                start_index = it_p - params.p.begin(); // Find index
             }
-            else if (params.q.size() >= params.p.size() && it_q != params.q.end()) {
-                sequence_letter = 'q';
-                start_index = it_q - params.q.begin(); // Code for finding index!
+            else if (params.q.size() >= params.p.size() && it_q != params.q.end()) { // if label in the longest sequence
+                path_letter = 'q';
+                start_index = it_q - params.q.begin(); // Find index
             }
-            else {
-                sequence_letter = (it_p != params.p.end()) ? 'p': 'q';
+            else { // if label in the shortest sequence
+                path_letter = (it_p != params.p.end()) ? 'p': 'q';
                 start_index = (it_p != params.p.end()) ? (it_p - params.p.begin()) : (it_q - params.q.begin());
             }
 
             start_points = this->get_edges().at(edge_label);
 
             params.start_index = start_index;
-            params.path_letter = sequence_letter;
+            params.path_letter = path_letter;
             params.path = (params.path_letter == 'p') ? params.p : params.q;
             return start_points;
         }
@@ -359,8 +382,13 @@ void Graph::search_match(Node* node, std::vector<Node*> &stash, int current_inde
             params.found_patterns->insert(stash);
             //}                    //OpenMP Solution  ------------------
 
+            if (*params.exit) return;
+
             if (!params.return_nodes) *params.exit = true; //obs! make work with the current copy. pointer solution, does this worl?
                 //..........send to rank 0? but what if only one rank...
+
+            int rank = 0;
+
         }
         return;
     }
@@ -450,12 +478,12 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
 
         std::vector<Node*> stash; //will contain start and end node! Will continously be made several copies.
                               //Might CHANGE TO array of set size 2!!!
-
         params.start_edge = edge; //COPY
         if (params.start_index == 0) stash.push_back(edge->get_tail_node()); //if we start at the beginning //recursion will handle all else cases
 
         //using recursive function to iterate trough graph until patterns are found or not found
         iterate_forward(edge, stash, current_index, params);
+
         if (*params.exit) break;
     }
   //} //pragma end //Open MP Solution --------------
@@ -492,7 +520,7 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
     // COLLECT ALL NODES ON RANK 0 (root)
 
     // step 1: Figure out how many nodes each rank has found. This is the number of elements each rank will send to rank 0
-
+    //MPI_Barrier(MPI_COMM_WORLD);
     if (rank) {
 
         // Send number of nodes
@@ -517,6 +545,9 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
     }
 
     std::set<std::vector<Node*>> all_pairs;
+
+
+
 
     // GATHERING
     if (rank == 0) {
@@ -567,7 +598,7 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
 //MPI Solution ----------------------
 
     //----SHOW RESULTS: found_patterns now contain either one set of nodes or several or none at all
-    if (all_pairs.empty()) {// do not have any containment:
+    if (all_pairs.empty()) {
          std::cout << "No such pattern exists in the graph." << std::endl;
     }
     else if (!return_nodes) {
@@ -578,10 +609,11 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
     else {
         std::cout << "The requested pattern is found! All connections found is as follows:" <<  std::endl;
 
-        for (auto node_pairs: all_pairs) { //*params.found_patterns
+        for (auto node_pairs: all_pairs) {
             std::cout << "Pair: " << node_pairs[0]->get_label() << " - " << node_pairs[1]->get_label() << std::endl;
          }
     }
+
     return all_pairs;
     }
 

@@ -113,7 +113,7 @@ namespace graph
 	int num_edges = 0; // Total number of edges in the graph
 	bool generate_graph_from(std::istream* source); // Implementation of this copied from directed-graph example.
 
-    // Private functions only relevant for function "find_pattern"... INvestigate if this can be "hidden" elsewhere
+    // Private functions only relevant for function "find_pattern"... Investigate if this can be "hidden" elsewhere
     struct Parameters;
 	std::vector<Edge*> analyse_graph(Parameters &params);
 	std::vector<Edge*> analyse_path_edges(const bool start, Parameters &params, std::map<std::string,int> &counted_instances);
