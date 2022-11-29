@@ -32,7 +32,7 @@ bool Path::read_path(std::string* token, std::istream* source)
 
 }
 
-// Based on query example from directed graph(lecture code)
+// Code from query example from directed graph(lecture code)
 void Path::in(std::istream* source) {
 	std::string edge_lbl;
 	while (read_path(&edge_lbl, source))
