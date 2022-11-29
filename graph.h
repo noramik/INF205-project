@@ -57,16 +57,12 @@ namespace graph
 		this->set_tail_node(tail_node);
 	};
 
-	// Returns the label of the edge
-	std::string get_label() const {return this->label;};
-	/// Returns the node the edge is leading from.
-	Node* get_head_node() const {return this->head_node;}
-	// Returns the node the edge is leading to.
-	Node* get_tail_node() const {return this->tail_node;}
-	// Sets head node
-	void set_head_node(Node* new_node) {this->head_node = new_node;}
-	// Sets tail node
-	void set_tail_node(Node* new_node) {this->tail_node = new_node;}
+
+	std::string get_label() const {return this->label;} // Returns the label of the edge
+	Node* get_head_node() const {return this->head_node;} // Returns the node the edge is leading from.
+	Node* get_tail_node() const {return this->tail_node;}// Returns the node the edge is leading to.
+	void set_head_node(Node* new_node) {this->head_node = new_node;} // Sets head node
+	void set_tail_node(Node* new_node) {this->tail_node = new_node;} // Sets tail node
 
 
 	private:
@@ -81,28 +77,28 @@ namespace graph
 	Graph() {}; // Constructor
 	// Creates new node, if a node with label already exists, it returns that node.
 	Node* create_node(std::string in_label);
-	// Creates new edge.
-	void create_edge(std::string in_label, std::string tail_node_name, std::string head_node_name);
-	// Returns the node map.
-	std::map<std::string, Node*> get_nodes() const {return this->nodes;} //Maybe delete, not used anywhere
-	// Returns the edges map
-	std::unordered_map<std::string, std::vector<Edge*>> get_edges() const {return this->edges;}
+
+	void create_edge(std::string in_label, std::string tail_node_name, std::string head_node_name); // Creates new edge.
+	std::map<std::string, Node*> get_nodes() const {return this->nodes;} // Returns the node map.
+	std::unordered_map<std::string, std::vector<Edge*>> get_edges() const {return this->edges;} // Returns the edges map
 
 	// in method copied from directed-graph example from lecture.
     // read from *source
     void in(std::istream* source) {
        while(this->generate_graph_from(source)) {} };// read edge by edge, until generate_edge_from returns false
-    // Writes to *target
-    void out(std::ostream* target){print_graph(target);}
-    // Prints the graph.
-    void print_graph(std::ostream* target);
+    void out(std::ostream* target){print_graph(target);} // Writes to *target
+    void print_graph(std::ostream* target); // Prints the graph.
     int get_num_edges() const {return this->num_edges;} // Returns total number of edges in the graph
 	/*
 
 	Node* get_node_pointer_by_unique_label() (?)
     */
 
+/* //MPI Solution 
     std::set<std::vector<Node*>> find_pattern(int rank, int size, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes=false); //False betyr True/False answer. True betyr finn alle noder og returner med label.
+*/
+    std::set<std::vector<Node*>> find_pattern(int num_ranks, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes=false); //False betyr True/False answer. True betyr finn alle noder og returner med label.
+
 
 	~Graph();// Destructor
 	Graph(const Graph& orig); // Copy constructor

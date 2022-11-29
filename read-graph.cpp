@@ -5,7 +5,11 @@
 
 #include "graph.h"
 #include "path.h"
+/* // MPI Solution
 #include <mpi.h>
+*/
+#include <omp.h>
+
 
 int main(int argc, char** argv)
 {
@@ -24,12 +28,19 @@ int main(int argc, char** argv)
 
 	   assert(argc >= 2);  //Why is this 3, it throws an error, don't know why
 
+        int num_threads = 1;
+        num_threads = std::atoi(argv[2]);
+        omp_set_num_threads(num_threads);
+
+
 	   std::ifstream indata(argv[1]);
 	   if(!indata)
 	   {
 	      std::cerr << "Error! File " << argv[1] << " cannot be read.\n";
 	      //return EXIT_FAILURE;
 	   }
+
+
 	   graph::Graph g;
 	   indata >> g;
 	   std::cout << g;
@@ -51,18 +62,18 @@ int main(int argc, char** argv)
 
 
 	   std::cout << "RUNNING ALGORITHM" <<std::endl;
-
 	   std::vector<std::string> p{"is", "is"};
 	   std::vector<std::string> q{"is", "is"};
 
-
-        int num_tests = 1000;
+     int num_tests = 1000;
 
 	   auto t0 = std::chrono::high_resolution_clock::now();
+     
 	   for (int i=0; i<num_tests; i++) {
-            std::set<std::vector<graph::Node*>> k = g.find_pattern(rank, size, p, q, false); //all ranks
+            // std::set<std::vector<graph::Node*>> k = g.find_pattern(rank, size, p, q, false); //MPI Solution
+            std::set<std::vector<graph::Node*>> k = g.find_pattern(num_threads, p, q, false);
 	   }
-        MPI_Finalize();
+        // MPI_Finalize(); //MPI Solution
         auto t1 = std::chrono::high_resolution_clock::now();
         std::cout << "Time measurement: " << std::chrono::duration_cast<std::chrono::microseconds>(t1-t0).count()/ (double)num_tests << "ms" << std::endl;
 
@@ -78,4 +89,5 @@ int main(int argc, char** argv)
 
 
 	   return 0;
+
 }
