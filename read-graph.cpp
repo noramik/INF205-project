@@ -5,14 +5,18 @@
 
 #include "graph.h"
 #include "path.h"
-/* // MPI Solution
-#include <mpi.h>
-*/
-#include <omp.h>
 
+#include <mpi.h> // MPI Solution ////////////////////
+
+//#include <omp.h> // OpenMP Solution -------------------
+
+// Run with OpenMP: compiled_file.exe C:\path\to\graph.dat NUMBER_OF_NODES
+// Run with MPI:
 
 int main(int argc, char** argv)
 {
+
+     //MPI Solution ////////////////////////
        // Initialize parallellization
        MPI_Init(&argc, &argv);
 
@@ -30,7 +34,7 @@ int main(int argc, char** argv)
 
         int num_threads = 1;
         num_threads = std::atoi(argv[2]);
-        omp_set_num_threads(num_threads);
+        //omp_set_num_threads(num_threads); // OpenMP Solution ---------------
 
 
 	   std::ifstream indata(argv[1]);
@@ -63,29 +67,22 @@ int main(int argc, char** argv)
 
 	   std::cout << "RUNNING ALGORITHM" <<std::endl;
 	   std::vector<std::string> p{"is", "is"};
-	   std::vector<std::string> q{"is", "is"};
+	   std::vector<std::string> q{"is", "has"};
 
-     int num_tests = 1000;
+       int num_tests = 1000;
 
 	   auto t0 = std::chrono::high_resolution_clock::now();
-     
+
 	   for (int i=0; i<num_tests; i++) {
-            // std::set<std::vector<graph::Node*>> k = g.find_pattern(rank, size, p, q, false); //MPI Solution
-            std::set<std::vector<graph::Node*>> k = g.find_pattern(num_threads, p, q, false);
+             std::set<std::vector<graph::Node*>> k = g.find_pattern(rank, size, p, q, false); //MPI Solution ///////////////////////////////////
+            //std::set<std::vector<graph::Node*>> k = g.find_pattern(num_threads, p, q, false); // OpenMP Solution --------------------------------
 	   }
-        // MPI_Finalize(); //MPI Solution
+
+         MPI_Finalize(); //MPI Solution ///////////////////////////////////
+
+
         auto t1 = std::chrono::high_resolution_clock::now();
         std::cout << "Time measurement: " << std::chrono::duration_cast<std::chrono::microseconds>(t1-t0).count()/ (double)num_tests << "ms" << std::endl;
-
-
-
-        /*
-        std::cout <<"is empty: " <<k.empty()<<std::endl;
-        for (auto node_pairs: k) {
-            std::cout << "Pair: " << node_pairs[0]->get_label() << " - " << node_pairs[1]->get_label() << std::endl;
-         }*/
-
-
 
 
 	   return 0;

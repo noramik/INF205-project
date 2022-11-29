@@ -94,10 +94,9 @@ namespace graph
 	Node* get_node_pointer_by_unique_label() (?)
     */
 
-/* //MPI Solution 
-    std::set<std::vector<Node*>> find_pattern(int rank, int size, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes=false); //False betyr True/False answer. True betyr finn alle noder og returner med label.
-*/
-    std::set<std::vector<Node*>> find_pattern(int num_ranks, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes=false); //False betyr True/False answer. True betyr finn alle noder og returner med label.
+
+    std::set<std::vector<Node*>> find_pattern(int rank, int size, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes=false); //MPI Solution //////////
+    //std::set<std::vector<Node*>> find_pattern(int num_ranks, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes=false); //OpenMP Solution ----------
 
 
 	~Graph();// Destructor
