@@ -115,11 +115,11 @@ namespace graph
 
     // Private functions only relevant for function "find_pattern"... Investigate if this can be "hidden" elsewhere
     struct Parameters;
-	std::vector<Edge*> analyse_graph(Parameters &params);
-	std::vector<Edge*> analyse_path_edges(const bool start, Parameters &params, std::map<std::string,int> &counted_instances);
-    void iterate_forward(Edge* edge, std::vector<Node*> stash, int current_index, Parameters &params);
-	void iterate_backward(Edge* edge, std::vector<Node*> stash, int current_index, Parameters &params);
-	void search_match(Node* node, std::vector<Node*> &stash, int current_index, Parameters &params);
+	std::vector<Edge*> _analyse_graph(Parameters &params);
+	std::vector<Edge*> _analyse_path_edges(const bool start, Parameters &params, std::map<std::string,int> &counted_instances);
+    void _iterate_forward(Edge* edge, std::vector<Node*> stash, int current_index, Parameters &params);
+	void _iterate_backward(Edge* edge, std::vector<Node*> stash, int current_index, Parameters &params);
+	void _search_match(Node* node, std::vector<Node*> &stash, int current_index, Parameters &params);
 	};
 
 }
