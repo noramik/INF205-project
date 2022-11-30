@@ -70,7 +70,7 @@ int main(int argc, char** argv)
 	   std::vector<std::string> p{"is", "is"};
 	   std::vector<std::string> q{"is", "is"};
 
-       int num_tests = 1000;
+       int num_tests = 1;
 
 	   auto t0 = std::chrono::high_resolution_clock::now();
 

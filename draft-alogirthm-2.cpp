@@ -17,23 +17,13 @@
 using namespace graph;
 
 
-    //STEP 1: ANALYSE ----------------
-    /*
-    1.1 Count instances
-        1.1.1 Find unique edges in p and q
-        1.1.2 (gå inn i edge_mappingen of hent ut lengden av listene)
-                Lagre antallet i en ny midlertidig map
-
-    1.2 Sjekk requirements
-
-        1.2.1 if any instances == 1: Velg dette som startpunkt
-        1.2.2 elif (p_1, p_n, q_1, q_m) < Et eller annet: Sjekk felles noder, bruk dette som startpunkt (evt. stopp hele koden)
-        1.2.3 else velg laveste antall av forekomst i den lengste pathen */
 
 
 
-/// Common variables all iterations/recursions need access to.
-// Rather than sending many variables as inputarguments for each recursion, they are stored together in a structure.
+/**
+ * Common variables all iterations/recursions need access to.
+ * Rather than sending many variables as inputarguments for each recursion, they are stored together in a structure.
+*/
 struct Graph::Parameters{
 
     Edge* start_edge;    //traversal starts here. Updated for each starting point
@@ -75,86 +65,90 @@ struct Graph::Parameters{
 */
 std::vector<Edge*> Graph::_analyse_path_edges(const bool start, Parameters &params, std::map<std::string,int> &counted_instances) {
 
-    int requirement = floor (this->get_num_edges()/3); ///Must choose this math carefully. Dummy value now. REPLACE this->tot_num_edges
-    std::string p_label = (start) ? params.p[0] : params.p.back(); //first element if at the start, otherwise the last element
-    std::string q_label = (start) ? params.q[0] : params.q.back(); //first element if at the start, otherwise the last element
+    std::vector<Edge*> start_points; // vector to be returned
 
-    std::vector<Edge*> start_points; //return vector
-    Node* node;
-    std::vector<Edge*> vec_p = this->get_edges().at(p_label); //copy?
-    std::vector<Edge*> vec_q = this->get_edges().at(q_label);
+    int requirement = floor (this->get_num_edges()/3); // This can be changed as wanted
 
+    // choose the labels corresponding to whether we investigate the start or ending nodes
+    std::string p_label = (start) ? params.p[0] : params.p.back();
+    std::string q_label = (start) ? params.q[0] : params.q.back();
 
+    Node* node; // holds temporary nodes investigated for its' "next_labels"
+    std::vector<Edge*> vec_p = this->get_edges().at(p_label); // all edges with label p_label
+    std::vector<Edge*> vec_q = this->get_edges().at(q_label); // all edges with label q_label
 
+    // investigate the label with the fewest instances only if requirements are fulfilled
     if (counted_instances[p_label] <= counted_instances[q_label] && counted_instances[p_label] < requirement) {
-        //.... check for matching nodes
+        // search for q_label in "next_edges" to node connected to edges with p_label
 
-        params.path_letter = (params.p.size()>= params.q.size()) ? 'p' : 'q'; /*p or q: find which sequence is the largest*/
-        params.path = (params.path_letter == 'p') ? params.p : params.q;
-        int start_index; //prefer as a const, but this is difficult
+        params.path_letter = 'p';
+        params.path = params.p;
+        int start_index;
 
-        for (int i = 0; i < vec_p.size(); i++) { //for--ranged loop created bug. not sure why. also iterator...
-            //for (Edge* edge_pointer : this->get_edges().at(p_label)) {std::cout << edge_pointer << "\t";}
-            std::vector<std::string> potential_edges; //edges to search among
-            if (start) {//if True
-                //std::cout << vec_p[i] << std::endl; //this is sometimes a nullpointer. Think this is fixed now
-
-                node = vec_p[i]->get_tail_node();
+        for (int idx = 0; idx < vec_p.size(); idx++) {
+            std::vector<std::string> potential_edges; //edge_labels to search for instance of both p- and q_label among \
+                                                        for each iteration
+            if (start) { // investigating starting edges
+                node = vec_p[idx]->get_tail_node();
                 start_index = 0;
-                for (auto &i: node->get_next_edges()) {potential_edges.push_back(i->get_label());}
+                for (auto &edge: node->get_next_edges()) {potential_edges.push_back(edge->get_label());}
             }
-            else { //if at the end
-                node = vec_p[i]->get_head_node();
+            else { // investigating ending edges
+                node = vec_p[idx]->get_head_node();
                 start_index = params.path.size()-1;
-                for (auto &i: node->get_next_edges()) {potential_edges.push_back(i->get_label());}
+                for (auto &edge: node->get_next_edges()) {potential_edges.push_back(edge->get_label());}
             }
 
+            //search for instance of q_label among potential_edges
             auto it = std::find(potential_edges.begin(), potential_edges.end(), q_label);
-            if (it != potential_edges.end()) {// if found
-                start_points.push_back(vec_p[i]);
+            if (it != potential_edges.end()) {// if found, add edge pointer from vec_p to starting_points
+                start_points.push_back(vec_p[idx]);
             }
         }
 
+        // update parameters
         params.start_index = start_index;
         if (start_points.empty()) *params.exit = true;
-
         return start_points;
     }
 
     else if (counted_instances[q_label] < requirement) {
-        //...check for matching nodes DUPLICATE (create another function?)
+        // REMOVE: DUPLICATE
+        // search for p_label in "next_edges" to node connected to edges with q_label
 
-        params.path_letter = (params.p.size()>= params.q.size()) ? 'p' : 'q'; /*p or q: find which sequence is the largest*/
-        params.path = (params.path_letter == 'p') ? params.p : params.q;
-        int start_index; //prefer as constant.. how to?
+        params.path_letter = 'q';
+        params.path = params.q;
+        int start_index;
 
-        //for (Edge* edge_pointer : this->get_edges().at(q_label)) {
-        for (int i = 0; i < vec_q.size(); i++) {
-            std::vector<std::string> potential_edges; //edges to search among
-            if (start) {//if True
-                Node* node = vec_q[i]->get_tail_node();
-                for (auto &i: node->get_next_edges()) {potential_edges.push_back(i->get_label());}
+        for (int idx = 0; idx < vec_q.size(); idx++) {
+            std::vector<std::string> potential_edges; //edge_labels to search for instance of both p- and q_label among \
+                                                        for each iteration
+            if (start) {// investigating starting edges
+                Node* node = vec_q[idx]->get_tail_node();
                 start_index = 0;
+                for (auto &edge: node->get_next_edges()) {potential_edges.push_back(edge->get_label());}
             }
-            else { //if at the end
-                Node* node = vec_q[i]->get_head_node();
-                for (auto &i: node->get_next_edges()) {potential_edges.push_back(i->get_label());}
+            else {// investigating ending edges
+                Node* node = vec_q[idx]->get_head_node();
                 start_index = params.path.size()-1;
+                for (auto &edge: node->get_next_edges()) {potential_edges.push_back(edge->get_label());}
             }
 
+            // search for instance of q_label among potential_edges
             auto it = std::find(potential_edges.begin(), potential_edges.end(), p_label);
-            if (it != potential_edges.end()) {// if found
-                start_points.push_back(vec_q[i]);
+            if (it != potential_edges.end()) {// if found, add edge pointer from vec_q to starting_points
+                start_points.push_back(vec_q[idx]);
             }
         }
 
+        // update parameters
         params.start_index = start_index;
         if (start_points.empty()) {*params.exit = true;}
         return start_points;
-        // DUPLICATE END
+        // REMOVE: DUPLICATE END
     }
 
-    else { // we don't want to do anything, but return for consistency
+    else {// requirements not fulfilled. Return empty vector without updating parameters.
         return start_points;
     }
 };
@@ -184,6 +178,9 @@ std::vector<Edge*> Graph::_analyse_path_edges(const bool start, Parameters &para
           edges (in p and q) as "next_edges". If no such nodes are found, the pattern does not exist.
          Lower number of instances is prioritized for initial search.
          This procedure is not allowed for equal starting edges or equal ending edges (in p and q)
+    * 3. The last step handles the general scenario.
+         Edgelabels are prioritized after number of instances (fewer are valued more)
+         The longest sequence with an instance of the edge label are chosen for the initial traversals.
 */
 std::vector<Edge*> Graph::_analyse_graph(Parameters &params) {
     std::vector<Edge*> start_points;  // vector to be returned
@@ -205,9 +202,7 @@ std::vector<Edge*> Graph::_analyse_graph(Parameters &params) {
         int num_instances; // temporary holds number of instances of different edge labels
 
         // catch error if given label does not exist in the graph
-        try {
-            num_instances = this->get_edges().at(edge_label).size(); // length of extracted list == number of instances
-        }
+        try {num_instances = this->get_edges().at(edge_label).size();} // length of extracted list == number of instances
         catch (const std::out_of_range& oor){ //.at() will throw an out_of_range error if edge label does not occur as a key
             std::cerr << "InputError: The provided label '" << edge_label << "' does not exist in the graph." << std::endl;
             return start_points;
@@ -284,41 +279,46 @@ std::vector<Edge*> Graph::_analyse_graph(Parameters &params) {
         if (!start_points.empty()) return start_points;
         if (*params.exit) return start_points;
     }
-    // if no edges was qualified for the "_analyse_path_edges", and the code did not terminate, step 3 is started:
+    // if no edges was qualified for the "_analyse_path_edges", and the code did not terminate, continue with step 3.
 
     // Step 3
     // -------
-    // -----General case: lowest count and longest sequence
+    // Find the lowest count of the edge labels and choose the longest sequence which holds this label
+
+    // lambda function, return pair of (label, num_instances)
     auto comp = [&](std::pair<std::string, int> a, std::pair<std::string, int> b) { //captured by reference
         return a.second < b.second;
-    }; //lambda function //something wrong i think
+    };
+    // use lambda function "comp" to find the label with the fewest instances in the graph in p or q
     std::pair<std::string, int> minima = *min_element(counted_instances.begin(), counted_instances.end(), comp);
-                                                      //[] (std::pair<std::string, int> a, std::pair<std::string, int> b) {return a.second < b.second;}
-                                                      //); //should return pair of (label, num_instances)
-    start_points = this->get_edges().at(minima.first); //can we add all at once, or do we have to iterate and add one at a time?
 
-    // Find the longest sequence that holds the min_label + the index //DUPLICATE (expect for start above...)
-    char sequence_letter; /* find which sequence this label is in (p or q), start searching in the longest one*/
-    int start_index; /*the index in the path for the starting point*/ //again...better constant
+    start_points = this->get_edges().at(minima.first); // add all starting points with the found label
 
+    //REMOVE duplicate from step 1.1
+    // Find the longest sequence that holds the chosen label, and update parameters
+    char path_letter; // will hold the chosen path letter ('p' or 'q')
+    int start_index;      // will hold the index of the label in the chosen sequence
+
+    // Find occurence of the label in p or q and choose starting sequence
     auto it_p = std::find(params.p.begin(), params.p.end(), minima.first);
     auto it_q = std::find(params.q.begin(), params.q.end(), minima.first);
 
-    if (params.p.size() >= params.q.size() && it_p != params.p.end()) {
-        sequence_letter = 'p';
-        start_index = it_p - params.p.begin(); // Code for finding index!
+    if (params.p.size() >= params.q.size() && it_p != params.p.end()) {// If label in the longest sequence
+        path_letter = 'p';
+        start_index = it_p - params.p.begin(); // Find index
     }
-    else if (params.q.size() >= params.p.size() && it_q != params.q.end()) {
-        sequence_letter = 'q';
-        start_index = it_q - params.q.begin(); // Code for finding index!
+    else if (params.q.size() >= params.p.size() && it_q != params.q.end()) {// If label in the longest sequence
+        path_letter = 'q';
+        start_index = it_q - params.q.begin(); // Find index
     }
-    else {
-        sequence_letter = (it_p != params.p.end()) ? 'p': 'q';
+    else {// If label in the shortest sequence
+        path_letter = (it_p != params.p.end()) ? 'p': 'q';
         start_index = (it_p != params.p.end()) ? (it_p - params.p.begin()) : (it_q - params.q.begin());
     }
 
+    // update parameters
     params.start_index = start_index;
-    params.path_letter = sequence_letter;
+    params.path_letter = path_letter;
     params.path = (params.path_letter == 'p') ? params.p : params.q;
     return start_points;
 };
