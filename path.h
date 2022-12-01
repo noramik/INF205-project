@@ -9,13 +9,12 @@
 
 namespace graph
 {
+/*
+ * Our path class is based on query struct from directed-graph(lecture code).
+ */
 class Path
 {
 public:
-/* This ends up being a lot closer to version from query example (directed graph) than I intended,
- * but this seemed the only way I could figure out how to do it without relying on knowing how long the path is.
- */
-
 bool read_path(std::string* token, std::istream* source); // Based on query example from directed graph (lecture code)
 void in(std::istream* source); // Based on query example from directed graph(lecture code)
 std::vector<std::string> return_path_labels() const {return this->path_labels;} // returns the path_labels vector

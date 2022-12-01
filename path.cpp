@@ -8,8 +8,8 @@ using namespace graph;
 
 
 
-/* This ends up being a lot closer to version from query example (directed graph) than I intended,
- * but this seemed the only way I could figure out how to do it without relying on knowing how long the path is.
+/*
+ * Based on query.cpp from directed-graph(lecture code)
  */
 
 // Code from query example from directed graph (lecture code)
