@@ -197,7 +197,7 @@ std::vector<Edge*> Graph::_analyse_graph(Parameters &params) {
                 std::inserter(unique_labels, unique_labels.begin()));
 
     // Count number of instances and add to map "counted_instances"
-    for (auto edge_label: unique_labels) {
+    for (auto &edge_label: unique_labels) {
 
         int num_instances; // temporary holds number of instances of different edge labels
 
@@ -348,7 +348,7 @@ std::vector<Edge*> Graph::_analyse_graph(Parameters &params) {
                 Each stack has its' own copy and current_index is only increased after moving to the next stack (level of recursion) for consistency.
  * @param[in] params, structure storing common information relevant for each recursion
 */
-void Graph::_iterate_forward(Edge* edge, std::vector<Node*> stash, int current_index, Parameters &params) {
+void Graph::_iterate_forward(Edge* &edge, std::vector<Node*> stash, int current_index, Parameters &params) {
     if (current_index == params.path.size()-1) { //the end of the sequence is reached
         stash.push_back(edge->get_head_node());  //save the end node
 
@@ -371,7 +371,7 @@ void Graph::_iterate_forward(Edge* edge, std::vector<Node*> stash, int current_i
 
     else if (!edge->get_head_node()->get_next_edges().empty()) {           // not a dangling node
         current_index++;
-        for (Edge* next_edge: edge->get_head_node()->get_next_edges()) {
+        for (Edge* &next_edge: edge->get_head_node()->get_next_edges()) {
 
             if (next_edge->get_label() == params.path[current_index]) {    // match found
                 _iterate_forward(next_edge, stash, current_index, params); // keep recursing forward
@@ -402,7 +402,7 @@ void Graph::_iterate_forward(Edge* edge, std::vector<Node*> stash, int current_i
                 Each stack has its' own copy and current_index is only decreased after moving to the next stack (level of recursion) for consistency.
  * @param[in] params, structure storing common information relevant for each recursion
 */
-void Graph::_iterate_backward(Edge* edge, std::vector<Node*> stash, int current_index, Parameters &params) {
+void Graph::_iterate_backward(Edge* &edge, std::vector<Node*> stash, int current_index, Parameters &params) {
     if (current_index == 0) {                               // reached the beginning
         stash.insert(stash.begin(), edge->get_tail_node()); //store the beginning node as the first element in stash
 
@@ -418,7 +418,7 @@ void Graph::_iterate_backward(Edge* edge, std::vector<Node*> stash, int current_
     else if (!edge->get_tail_node()->get_prev_edges().empty()) {       // not a dangling node
         current_index--;
 
-        for (Edge* edge: edge->get_tail_node()->get_prev_edges()) {
+        for (Edge* &edge: edge->get_tail_node()->get_prev_edges()) {
             if (edge->get_label() == params.path[current_index]) {     // match found
                 _iterate_backward(edge, stash, current_index, params); // keep recursing backward
                 if (*params.exit) return; // handle exit strategy. See structure Parameters for more
@@ -460,7 +460,7 @@ void Graph::_search_match(Node* node, std::vector<Node*> &stash, int current_ind
     else if (!node->get_next_edges().empty()) {// not a dangling node
         current_index++;
 
-        for (Edge* edge: node->get_next_edges()) {
+        for (Edge* &edge: node->get_next_edges()) {
             if (edge->get_label() == params.path[current_index]) {// match found
                 _search_match(edge->get_head_node(), stash, current_index, params); // keep recursing forward
                 if (*params.exit) return; // handle exit strategy. See structure Parameters for more
@@ -473,82 +473,97 @@ void Graph::_search_match(Node* node, std::vector<Node*> &stash, int current_ind
 
 
 
+/**
+ * Find pair of nodes connecting two sequences p and q both by start and end, present in the graph.
+ *
+ * @param[out] vector of pairs of pointers to nodes, that connect p and q. Empty vector if no such matches are found.
+ * @param[in] num_ranks, the number of ranks in the parallelization
+ * @param[in] p, vector of edge labels. One of the two sequences we are searching for in the graph.
+ * @param[in] q, vector of edge labels. One of the two sequences we are searching for in the graph.
+ * @param[in] return_nodes, a boolean. False by default.
+               If false, the function returns whether such a pattern exists or not in the graph, with the first matching pair of nodes.
+               If true, the function keep traversing the graph until all possible matching pairs are found, and returns all pairs.
 
+               The recursions will exit immediately if return_nodes is set to false, and a match has been found,
+               using the parameter "exit" in structure Parameters, which is common for all instances of this object.
+*/
 
-//MPI solution
+//MPI solution //////////////////
 std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes) { //return_nodes=false as default
 
+// Open MP Solution ---------------
 //std::set<std::vector<Node*>> Graph::find_pattern(int num_ranks, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes) { //return_nodes=false as default
 
-    // initialize parameters
-    Parameters params; //each rank will have its' own.. important! not shared memory
-
+    // STEP 1: Initialize parameter, and analyse graph to find starting edges
+    // ------
+    // initialize parameters and provide it with initial information
+    Parameters params;
     params.return_nodes = return_nodes;
     params.p = p;
     params.q = q;
 
-    auto starting_points = _analyse_graph(params);
+    auto starting_points = _analyse_graph(params); // fetch the edges the traversals will start at by performing an analysis of the graph
 
-    if (starting_points.empty()) {//Somehow check if starting points is empty:
+    // The analysis might return an empty vector, indicating that no such pattern as requested can be found in the graph.
+    // Terminate the code immediately.
+    if (starting_points.empty()) {
         std::cout << "No such pattern exists in the graph." << std::endl;
         return *params.found_patterns;
     }
 
-
-    //Make global variables for each rank
-    std::set<std::vector<Node*>> found_patterns;
-    bool exit = false;
+    // Create "global" variables common for all instances of the structure Parameters
+    std::set<std::vector<Node*>> found_patterns; // will collect all found patterns
+    bool exit = false; // by default
     params.found_patterns = &found_patterns;
     params.exit = &exit;
 
 
 
-    //STEP 2. Deleger startpunkter til ranks (parallellisering) --------------
+    // STEP 2: Delegate starting edges between the ranks using a mathematical formula
+    // -------
 
     //#pragma omp parallel //OpenMP Solution -----------------------
     //{                    //OpenMP Solution -----------------------
     //int rank = omp_get_thread_num(); // OpenMP SOLUTION -------------------
 
-    int current_index = params.start_index; //each recursion need it's own in it's scope (private label)
 
+    int current_index = params.start_index;
 
-    //find starting points: //use formula to extract starting points
+    // use formula to extract starting points for each rank
+    // The formula uses the total number of found starting points, the total number of ranks and the value of the current rank \
+        to extract the starting points.
+    // If there are more ranks than starting points, they will be left with no starting points, and terminate.
     int num_points = starting_points.size();
     int a = floor(num_points/num_ranks);
     int b = num_points%num_ranks;
 
-
-    std::vector<Edge*> rank_start_points;
+    std::vector<Edge*> rank_start_points; // a rank's starting points
     if (rank < b) {
-        int start_pos = rank+rank*a;
-        for(auto it=starting_points.begin()+start_pos; it != starting_points.begin()+(start_pos + a+1); it++) {
+        int start_pos = rank + rank*a;
+        for(auto it=starting_points.begin() + start_pos; it != starting_points.begin() + (start_pos + a+1); it++) {
             rank_start_points.push_back(*it);
         }
     }
     else {
-
-        int start_pos = a*(rank-b)+b*(a+1);
-        for (auto it=starting_points.begin()+start_pos; it != starting_points.begin()+(start_pos+a); it++) {
+        int start_pos = a*(rank - b) + b*(a + 1);
+        for (auto it=starting_points.begin() + start_pos; it != starting_points.begin() + (start_pos+a); it++) {
             rank_start_points.push_back(*it);
         }
     }
 
 
-    //STEP 3. Start søk ------------------
+    // STEP 3: Start traversing the graph in search for matches
+    // -------
+    for (Edge* &edge : rank_start_points) {
+        std::vector<Node*> stash; // temporarily storage of start end end nodes of found paths. \
+                                      each stack (level of recursion) will have its' own "stash".
+        params.start_edge = edge;
+        if (params.start_index == 0) stash.push_back(edge->get_tail_node()); // if we start at the beginning
 
-    // Find all matching patterns of path_letter (p or q)
-    for (Edge* edge : rank_start_points) {
-
-
-        std::vector<Node*> stash; //will contain start and end node! Will continously be made several copies.
-                              //Might CHANGE TO array of set size 2!!!
-        params.start_edge = edge; //COPY
-        if (params.start_index == 0) stash.push_back(edge->get_tail_node()); //if we start at the beginning //recursion will handle all else cases
-
-        //using recursive function to iterate trough graph until patterns are found or not found
+        // recursive function to iterate trough graph until patterns are found or not found
         _iterate_forward(edge, stash, current_index, params);
 
-        if (*params.exit) break;
+        if (*params.exit) break; // handle exit strategy. See structure Parameters for more
     }
   //} //pragma end //Open MP Solution --------------
 
@@ -581,107 +596,94 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
 
 
  // MPI Solution /////////////////
-    // COLLECT ALL NODES ON RANK 0 (root)
+    // Collect all nodes on root node (rank 0)
+    // This is done by sending all the labels of the node pairs found, and translating them back to pointers on rank 0
+    // As rank 0 needs to know how much it is about to receive, all ranks first send the number of nodes it has found \
+        followed by how many characters each nodelabel consists of. \
+        Rank 0 stores this information in maps to prepare for receiving the actual character arrays. \
+        (MPI does not support strings, so all strings are translated into character arrays)
 
-    // step 1: Figure out how many nodes each rank has found. This is the number of elements each rank will send to rank 0
-    //MPI_Barrier(MPI_COMM_WORLD);
-    if (rank) {
-
-        // Send number of nodes
+    if (rank) { // every rank but rank 0
+        // Send number of nodes the current rank has found
         int num_nodes = params.found_patterns->size()*2;
         MPI_Send(&num_nodes, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
 
-        // for each pair in set
-        for (auto it : *params.found_patterns) {
-            //for each node in pair
-            for (auto node : it) {
+        for (auto it : *params.found_patterns) {// for each pair in set
 
-                //send number of characters
+            for (auto node : it) {// for each node in pair
+
+                //send number of characters in the nodelabel
                 const char* str = node->get_label().c_str();
                 int str_len = strlen(str);
                 MPI_Send(&str_len, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);
 
-                //send label
+                //send the actual nodelabel
                 MPI_Send(str, str_len+1, MPI_CHAR, 0, 2, MPI_COMM_WORLD);
-
             }
         }
     }
 
-    std::set<std::vector<Node*>> all_pairs;
 
-
-
-
-    // GATHERING
     if (rank == 0) {
-        std::map<int, int> recv_num_nodes; //number of nodes to recieve
-
-        std::map<int, std::vector<int>> recv_len; //length of each node-label to recieve
+        std::map<int, int> recv_num_nodes; //number of nodes to receive
+        std::map<int, std::vector<int>> recv_len; //length of each node-label to receive
         int temp; //temporary storage
 
-        std::set<std::vector<Node*>> all_pairs;
-        //insert the pairs from rank 0:
-        all_pairs = *params.found_patterns; //copy in
+        std::set<std::vector<Node*>> all_pairs; // vector to save all found pairs received from all ranks
+        all_pairs = *params.found_patterns; // insert the pairs found on rank 0
 
-
-        //add num_nodes to map from each rank
-        for (int _rank=1; _rank<num_ranks; _rank++) {
+        // populate initialized maps
+        for (int _rank = 1; _rank < num_ranks; _rank++) {
 
             // number of nodes
             MPI_Recv(&recv_num_nodes[_rank], 1, MPI_INT, _rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-            // length of node labels
+            // length of node labels for current rank being handled
             for (int pos = 0; pos < recv_num_nodes[_rank]; pos++) {
-                    //does not send or recieve 0 if no nodes..
                 MPI_Recv(&temp, 1, MPI_INT, _rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 recv_len[_rank].push_back(temp);
             }
         }
 
-
-        //recieve labels
+        //receive labels
         std::vector<Node*> temp_pair;
-        for (auto map_it : recv_len) {
+        for (auto map_it : recv_len) { // example: map_it = {2: <4, 7, 6, 8>} (rank: vector of number of chracters for each node)
 
-            for (int len : map_it.second) {
-
-                char str[len+1]; //char adds '\0' which is wy we add 1
+            for (int len : map_it.second) { // for each "node"
+                // Initialize reciever
+                char str[len+1]; //character arrays adds '\0' which is why we add 1
                 MPI_Recv(str, len+1, MPI_CHAR, map_it.first, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
                 //find node
-                temp_pair.push_back(this->get_nodes()[str]); //not pair
+                temp_pair.push_back(this->get_nodes()[str]);
 
-                if (temp_pair.size() == 2) {
+                if (temp_pair.size() == 2) {// pair up
                     all_pairs.insert(temp_pair);
                     temp_pair.clear();
                 }
             }
         }
 
-//MPI Solution ----------------------
-
-    //----SHOW RESULTS: found_patterns now contain either one set of nodes or several or none at all
+    // SHOW RESULTS:
     if (all_pairs.empty()) {
          std::cout << "No such pattern exists in the graph." << std::endl;
     }
-    else if (!return_nodes) {
+    else if (!return_nodes) { // return whether the requested pattern exists or not
         std::cout << "The requested pattern is found!" << std::endl;
         std::cout << "WARNING: The returned nodes might not be the only nodes connected by these paths" <<"\n"<<
                     "Set parameter return_nodes=true to see all connections."<<std::endl;
     }
     else {
         std::cout << "The requested pattern is found! All connections found is as follows:" <<  std::endl;
-
-        for (auto node_pairs: all_pairs) {
+        for (auto &node_pairs: all_pairs) {
             std::cout << "Pair: " << node_pairs[0]->get_label() << " - " << node_pairs[1]->get_label() << std::endl;
          }
     }
 
     return all_pairs;
     }
-
-    return all_pairs; //empty for all ranks but 0
+    std::set<std::vector<Node*>> empty_vec;
+    return empty_vec; //empty for all ranks but 0. Return for consistency
 
 } // MPI Solution ///////////////// end
 
