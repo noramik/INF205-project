@@ -67,7 +67,7 @@ int main(int argc, char** argv)
 
 
 	   std::cout << "RUNNING ALGORITHM" <<std::endl;
-	   std::vector<std::string> p{"is", "is"};
+	   std::vector<std::string> p{"is", "has"};
 	   std::vector<std::string> q{"is", "is"};
 
        int num_tests = 1;

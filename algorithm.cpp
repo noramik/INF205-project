@@ -325,34 +325,57 @@ std::vector<Edge*> Graph::_analyse_graph(Parameters &params) {
 
 
 
-void Graph::_iterate_forward(Edge* edge, std::vector<Node*> stash, int current_index, Parameters &params) { //COPY stash and index
-    /// iterate forward in the graph
-    if (current_index == params.path.size()-1) {/*at the end of the path -> start iterating backwards unless the whole pattern is found ->end iterations*/
-        stash.push_back(edge->get_head_node()); //at the end
+/**
+ * Below is three functions: _iterate_forward, _iterate_backwards and _search_match.
+ * These functions represent the actual traversal troughout the graph, and are connected by recursions.
+*/
 
-        if (stash.size() == 2) {//Start searching for matching path!
-            current_index = -1; //UPDATW TO THIS EVERYWHERE?
-            Parameters copy_params = params; //SHALLOW copy, does this work as wanted? (we want the same poitners)
-            copy_params.switch_parameters();
+/**
+ * Iterate forward in the graph from current edge to search for matching edge labels at the next position in sequence p or q,
+    compared to where the search is at "now".
+ * The iteration is done by recursions calling itself when traversals move forward, calling _iterate_backward when end of
+    sequence is reached, but entire sequence is not yet found, and calling _search_match if entire sequence of p or q is found,
+    and the next step is to search for match by q or p respectively.
+ *
+ * @param[out] update stash with node at end of path if this point is reached.
+ * @param[in] edge pointer. The current edge found as a match from the previous recursion, pointing to the node where the
+                             search for new matched will continue.
+ * @param[in] stash, vector of pointers to nodes.
+                Works as a temporary storage of important results from the traversals, where each stack will have its' own copy.
+                Stash will maximum contain two nodes, end and start node for our sequences.
+                If a path is followed trough to the end, the ending node will be stashed (saved in stash).
+ * @param[in] current_index. The current index in the sequence which are searched for.
+                Each stack has its' own copy and current_index is only increased after moving to the next stack (level of recursion) for consistency.
+ * @param[in] params, structure storing common information relevant for each recursion
+*/
+void Graph::_iterate_forward(Edge* edge, std::vector<Node*> stash, int current_index, Parameters &params) {
+    if (current_index == params.path.size()-1) { //the end of the sequence is reached
+        stash.push_back(edge->get_head_node());  //save the end node
 
-            _search_match(stash[0], stash, current_index, copy_params); //When this continues/returns we are done with this iteration
+        if (stash.size() == 2) {             // The entire path is found. Move on to search for a matching path
+            current_index = -1;              // Will be increased by _search_match
+            Parameters copy_params = params; // Shallow copy (keeps pointers to the same memory for all instances)
+            copy_params.switch_parameters(); // switch from p to q or opposite
+
+            //Search for p or q matching start and end position of our current found sequence.
+            _search_match(stash[0], stash, current_index, copy_params);
         }
 
-        else {/*at the end of the path -> start iterating backwards*/
-            int current_index = params.start_index; //update current_index as we are about to move backwards
+        else { // at end of path, but the entire sequence is not yet found
+               // start iterating backwards from our initial starting point, to search for the rest of the sequence
+            int current_index = params.start_index;
             _iterate_backward(params.start_edge, stash, current_index, params);
         }
-        if (*params.exit) return; //if poitner params->exit return;
-
+        if (*params.exit) return;            // handle exit strategy. See structure Parameters for more
     }
 
-    else if (!edge->get_head_node()->get_next_edges().empty()) {//make sure it is not empty
-        current_index++; //must handle the special case of the first iteration?
+    else if (!edge->get_head_node()->get_next_edges().empty()) {           // not a dangling node
+        current_index++;
         for (Edge* next_edge: edge->get_head_node()->get_next_edges()) {
 
-            if (next_edge->get_label() == params.path[current_index]) { //a match is found. Double check. what is index now?
-                _iterate_forward(next_edge, stash, current_index, params);
-                if (*params.exit) return;
+            if (next_edge->get_label() == params.path[current_index]) {    // match found
+                _iterate_forward(next_edge, stash, current_index, params); // keep recursing forward
+                if (*params.exit) return;    // handle exit strategy. See structure Parameters for more
             }
         }
         return;
@@ -361,27 +384,44 @@ void Graph::_iterate_forward(Edge* edge, std::vector<Node*> stash, int current_i
 };
 
 
-
+/**
+ * Iterate backward in the graph from current edge to search for matching edge labels at the previous unmacthed position in sequence p or q,
+    compared to where the search is at "now".
+ * The iteration is done by recursions calling itself when traversals move backward,
+    and calling _search_match if entire sequence of p or q is found, and the next step is to search for a match by q or p respectively.
+ * Function will not be called if a search started at the beginning of the sequence.
+ *
+ * @param[out] update stash with node at beginning of path if this point is reached.
+ * @param[in] edge pointer. The current edge found as a match from the previous recursion, pointing to the node where the
+                             search for new matched will continue.
+ * @param[in] stash, vector of pointers to nodes.
+                Works as a temporary storage of important results from the traversals, where each stack will have its' own copy.
+                Stash will maximum contain two nodes, end and start node for our sequences.
+                If a path is followed trough (backwards) to the beginning of the sequence, the start node will be stashed (saved in stash).
+ * @param[in] current_index. The current index in the sequence which are searched for.
+                Each stack has its' own copy and current_index is only decreased after moving to the next stack (level of recursion) for consistency.
+ * @param[in] params, structure storing common information relevant for each recursion
+*/
 void Graph::_iterate_backward(Edge* edge, std::vector<Node*> stash, int current_index, Parameters &params) {
-    //we do not go here if we started at index 0
-    if (current_index == 0) {
-        stash.insert(stash.begin(), edge->get_tail_node()); //order matters. stash must be (start, end)
-        //Start searching for matching path!
+    if (current_index == 0) {                               // reached the beginning
+        stash.insert(stash.begin(), edge->get_tail_node()); //store the beginning node as the first element in stash
 
-         Parameters copy_params = params; //SHALLOW copy, does this work as wanted?
-         copy_params.switch_parameters();
-         current_index = -1;
+         //Start searching for matching path!
+         Parameters copy_params = params; // Shallow copy (keeps pointers to the same memory for all instances)
+         copy_params.switch_parameters(); // switch from p to q or opposite
+         current_index = -1;              // Will be increased by _search_match
+         //Search for p or q matching start and end position of our current found sequence.
          _search_match(stash[0], stash, current_index, copy_params);
-         if (*params.exit) return;
+         if (*params.exit) return;        // handle exit strategy. See structure Parameters for more
     }
 
-    else if (!edge->get_tail_node()->get_prev_edges().empty()) { // make sure it is not empty
+    else if (!edge->get_tail_node()->get_prev_edges().empty()) {       // not a dangling node
         current_index--;
 
         for (Edge* edge: edge->get_tail_node()->get_prev_edges()) {
-            if (edge->get_label() == params.path[current_index]) { //if match!
-                _iterate_backward(edge, stash, current_index, params);
-                if (*params.exit) return;
+            if (edge->get_label() == params.path[current_index]) {     // match found
+                _iterate_backward(edge, stash, current_index, params); // keep recursing backward
+                if (*params.exit) return; // handle exit strategy. See structure Parameters for more
             }
         }
         return;
@@ -389,36 +429,41 @@ void Graph::_iterate_backward(Edge* edge, std::vector<Node*> stash, int current_
     else return;
 };
 
-//STASH must contain nodes in the order: (start, end)
-void Graph::_search_match(Node* node, std::vector<Node*> &stash, int current_index, Parameters &params) { //?node is the last node in the previously found pattern
+/**
+ * Search for sequence p or q matching start and end node of already found match q or p respectively.
+ * Iterate forward in the graph starting from the first node in the already found path recursively, looking for matches on edge labels.
+ * If entire sequence is found and the end node is a match, the pair of nodes (stored in "stash") is stored in the vector
+    "found_patterns" common for all instances of structure Parameters.
+ *
+ * @param[out] update "found_patterns" with pair of nodes if matches are found.
+ * @param[in] node pointer. The current node from which its' next edges are going to be investigated for matches.
+ * @param[in] stash, vector of one pair of node pointers, representing what the currently investigated sequence has to match.
+ * @param[in] current_index. The current index in the sequence which are searched for.
+                Each stack has its' own copy and current_index is only increased after moving to the next stack (level of recursion) for consistency.
+ * @param[in] params, structure storing common information relevant for each recursion.
+*/
+void Graph::_search_match(Node* node, std::vector<Node*> &stash, int current_index, Parameters &params) {
 
-    if (current_index == params.path.size()-1) {//found an entire path, but does the ending point match?
-        if (node == stash.back()) { //.back() has O(1) https://www.geeksforgeeks.org/vectorfront-vectorback-c-stl/
+    if (current_index == params.path.size()-1) {// entire sequence found
+        if (node == stash.back()) { // the sequence's ending location matches that of the other sequence. A match is found!
 
             //#pragma omp critical // OpenMP Solution ------------------
             //{                    //OpenMP Solution  ------------------
-            params.found_patterns->insert(stash);
+            params.found_patterns->insert(stash); // Save match
             //}                    //OpenMP Solution  ------------------
 
-            if (*params.exit) return;
-
-            if (!params.return_nodes) *params.exit = true; //obs! make work with the current copy. pointer solution, does this worl?
-                //..........send to rank 0? but what if only one rank...
-
-            int rank = 0;
-
+            if (!params.return_nodes) *params.exit = true; // handle exit strategy. See structure Parameters for more
         }
         return;
     }
 
-    else if (!node->get_next_edges().empty()) { //not empty
-        current_index++; //somethign wrong with this one now (24.11)
+    else if (!node->get_next_edges().empty()) {// not a dangling node
+        current_index++;
 
         for (Edge* edge: node->get_next_edges()) {
-
-            if (edge->get_label() == params.path[current_index]) {
-                _search_match(edge->get_head_node(), stash, current_index, params);
-                if (*params.exit) return;
+            if (edge->get_label() == params.path[current_index]) {// match found
+                _search_match(edge->get_head_node(), stash, current_index, params); // keep recursing forward
+                if (*params.exit) return; // handle exit strategy. See structure Parameters for more
             }
         }
         return;
@@ -481,6 +526,7 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
         }
     }
     else {
+
         int start_pos = a*(rank-b)+b*(a+1);
         for (auto it=starting_points.begin()+start_pos; it != starting_points.begin()+(start_pos+a); it++) {
             rank_start_points.push_back(*it);
