@@ -95,8 +95,8 @@ namespace graph
     */
 
 
-    std::set<std::vector<Node*>> find_pattern(int rank, int size, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes=false); //MPI Solution //////////
-    //std::set<std::vector<Node*>> find_pattern(int num_ranks, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes=false); //OpenMP Solution ----------
+    //std::set<std::vector<Node*>> find_pattern(int rank, int size, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes=false); //MPI Solution //////////
+    std::set<std::vector<Node*>> find_pattern(int num_ranks, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes=false); //OpenMP Solution ----------
 
 
 	~Graph();// Destructor
@@ -113,13 +113,15 @@ namespace graph
 	int num_edges = 0; // Total number of edges in the graph
 	bool generate_graph_from(std::istream* source); // Implementation of this copied from directed-graph example.
 
-    // Private functions only relevant for function "find_pattern"... Investigate if this can be "hidden" elsewhere
-    struct Parameters;
+    // Private functions only relevant for function "find_pattern"
+    struct Parameters; // storage for important common values used by search algorithm in "find_pattern"
+    // perform an analysis of the graph to provide "find_pattern" with wise starting points
 	std::vector<Edge*> _analyse_graph(Parameters &params);
+    // special scenario of analysis
 	std::vector<Edge*> _analyse_path_edges(const bool start, Parameters &params, std::map<std::string,int> &counted_instances);
-    void _iterate_forward(Edge* &edge, std::vector<Node*> stash, int current_index, Parameters &params);
-	void _iterate_backward(Edge* &edge, std::vector<Node*> stash, int current_index, Parameters &params);
-	void _search_match(Node* node, std::vector<Node*> &stash, int current_index, Parameters &params);
+    void _iterate_forward(Edge* &edge, std::vector<Node*> stash, int current_index, Parameters &params);  // recursive pattern-searching function
+	void _iterate_backward(Edge* &edge, std::vector<Node*> stash, int current_index, Parameters &params); // recursive pattern-searching function
+	void _search_match(Node* node, std::vector<Node*> &stash, int current_index, Parameters &params);     // recursive pattern-searching function
 	};
 
 }

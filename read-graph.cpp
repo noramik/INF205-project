@@ -6,9 +6,9 @@
 #include "graph.h"
 #include "path.h"
 
-#include <mpi.h> // MPI Solution ////////////////////
+//#include <mpi.h> // MPI Solution ////////////////////
 
-//#include <omp.h> // OpenMP Solution -------------------
+#include <omp.h> // OpenMP Solution -------------------
 
 // Run with OpenMP: compiled_file.exe C:\path\to\graph.dat NUMBER_OF_NODES
 // Run with MPI:
@@ -16,7 +16,7 @@
 int main(int argc, char** argv)
 {
 
-     //MPI Solution ////////////////////////
+     /*//MPI Solution ////////////////////////
        // Initialize parallellization
        MPI_Init(&argc, &argv);
 
@@ -28,14 +28,17 @@ int main(int argc, char** argv)
        int rank = 0;
        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+       // (end MPI solution) */
+
 
 
 	   assert(argc >= 2);  //Why is this 3, it throws an error, don't know why
 
         // OpenMP Solution ---------------
-        //int num_threads = 1;
-        //num_threads = std::atoi(argv[2]);
-        //omp_set_num_threads(num_threads);
+        int num_threads = 1;
+        num_threads = std::atoi(argv[2]);
+        omp_set_num_threads(num_threads);
+        // (end openMP solution) */
 
 
 	   std::ifstream indata(argv[1]);
@@ -70,16 +73,16 @@ int main(int argc, char** argv)
 	   std::vector<std::string> p{"is", "is"};
 	   std::vector<std::string> q{"is", "is"};
 
-       int num_tests = 1;
+       int num_tests = 10000;
 
 	   auto t0 = std::chrono::high_resolution_clock::now();
 
 	   for (int i=0; i<num_tests; i++) {
-             std::set<std::vector<graph::Node*>> k = g.find_pattern(rank, size, p, q, true); //MPI Solution ///////////////////////////////////
-            //std::set<std::vector<graph::Node*>> k = g.find_pattern(num_threads, p, q, false); // OpenMP Solution --------------------------------
+             //std::set<std::vector<graph::Node*>> k = g.find_pattern(rank, size, p, q, true); //MPI Solution ///////////////////////////////////
+            std::set<std::vector<graph::Node*>> k = g.find_pattern(num_threads, p, q, true); // OpenMP Solution --------------------------------
 	   }
 
-         MPI_Finalize(); //MPI Solution ///////////////////////////////////
+         //MPI_Finalize(); //MPI Solution ///////////////////////////////////
 
 
         auto t1 = std::chrono::high_resolution_clock::now();

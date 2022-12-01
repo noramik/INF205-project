@@ -10,14 +10,11 @@
 
 #include "graph.h"
 
-#include <mpi.h> //MPI SOLUTION ///////////////////
-//#include <omp.h> // OpenMP SOLUTION ----------------
+//#include <mpi.h> //MPI SOLUTION ///////////////////
+#include <omp.h> // OpenMP SOLUTION ----------------
 
 
 using namespace graph;
-
-
-
 
 
 /**
@@ -447,10 +444,10 @@ void Graph::_search_match(Node* node, std::vector<Node*> &stash, int current_ind
     if (current_index == params.path.size()-1) {// entire sequence found
         if (node == stash.back()) { // the sequence's ending location matches that of the other sequence. A match is found!
 
-            //#pragma omp critical // OpenMP Solution ------------------
-            //{                    //OpenMP Solution  ------------------
+            #pragma omp critical // OpenMP Solution ------------------
+            {                    // OpenMP Solution  -----------------
             params.found_patterns->insert(stash); // Save match
-            //}                    //OpenMP Solution  ------------------
+            }                    // OpenMP Solution  ------------------
 
             if (!params.return_nodes) *params.exit = true; // handle exit strategy. See structure Parameters for more
         }
@@ -489,10 +486,10 @@ void Graph::_search_match(Node* node, std::vector<Node*> &stash, int current_ind
 */
 
 //MPI solution //////////////////
-std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes) { //return_nodes=false as default
+//std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes) { //return_nodes=false as default
 
-// Open MP Solution ---------------
-//std::set<std::vector<Node*>> Graph::find_pattern(int num_ranks, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes) { //return_nodes=false as default
+// OpenMP Solution ---------------
+std::set<std::vector<Node*>> Graph::find_pattern(int num_ranks, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes) { //return_nodes=false as default
 
     // STEP 1: Initialize parameter, and analyse graph to find starting edges
     // ------
@@ -522,10 +519,11 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
     // STEP 2: Delegate starting edges between the ranks using a mathematical formula
     // -------
 
-    //#pragma omp parallel //OpenMP Solution -----------------------
-    //{                    //OpenMP Solution -----------------------
-    //int rank = omp_get_thread_num(); // OpenMP SOLUTION -------------------
-
+    // start parallel section
+    #pragma omp parallel //OpenMP Solution -----------------------
+    {                    //OpenMP Solution -----------------------
+    // get current rank
+    int rank = omp_get_thread_num(); // OpenMP SOLUTION -------------------
 
     int current_index = params.start_index;
 
@@ -565,11 +563,11 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
 
         if (*params.exit) break; // handle exit strategy. See structure Parameters for more
     }
-  //} //pragma end //Open MP Solution --------------
+  } //pragma end //OpenMP Solution --------------
 
 
-/*// Open MP Solution ---------------------------
-    //----SHOW RESULTS: found_patterns now contain either one set of nodes or several or none at all
+// OpenMP Solution ---------------------------
+    //SHOW RESULTS
     if (params.found_patterns->empty()) {// do not have any containment:
          std::cout << "No such pattern exists in the graph." << std::endl;;
          return *params.found_patterns;
@@ -582,19 +580,16 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
     }
     else {
         std::cout << "The requested pattern is found! All connections found is as follows:" <<  std::endl;
-
-        for (auto node_pairs: *params.found_patterns) {
+        for (auto &node_pairs: *params.found_patterns) {
             std::cout << "Pair: " << node_pairs[0]->get_label() << " - " << node_pairs[1]->get_label() << std::endl;
          }
         return *params.found_patterns;
     }
-
-
 } //OpenMP Solution -------------- end */
 
 
 
-
+/*
  // MPI Solution /////////////////
     // Collect all nodes on root node (rank 0)
     // This is done by sending all the labels of the node pairs found, and translating them back to pointers on rank 0
@@ -685,7 +680,7 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
     std::set<std::vector<Node*>> empty_vec;
     return empty_vec; //empty for all ranks but 0. Return for consistency
 
-} // MPI Solution ///////////////// end
+} // MPI Solution ///////////////// end */
 
 
 
