@@ -38,6 +38,7 @@ int main(int argc, char** argv)
         int num_threads = 1;
         num_threads = std::atoi(argv[2]);
         omp_set_num_threads(num_threads);
+        std::cout << "NUM THREADS" << num_threads << std::endl;
         // (end openMP solution) */
 
 
@@ -70,16 +71,17 @@ int main(int argc, char** argv)
 
 
 	   std::cout << "RUNNING ALGORITHM" <<std::endl;
-	   std::vector<std::string> p{"is", "is"};
-	   std::vector<std::string> q{"is", "is"};
+	   std::vector<std::string> p{"r0", "r2", "r4", "r6", "r8", "r10"};
+	   std::vector<std::string> q{"r0", "r2", "r4", "r6", "r8", "r10"};
 
-       int num_tests = 10000;
+       int num_tests = 1;
 
 	   auto t0 = std::chrono::high_resolution_clock::now();
 
 	   for (int i=0; i<num_tests; i++) {
              //std::set<std::vector<graph::Node*>> k = g.find_pattern(rank, size, p, q, true); //MPI Solution ///////////////////////////////////
             std::set<std::vector<graph::Node*>> k = g.find_pattern(num_threads, p, q, true); // OpenMP Solution --------------------------------
+            std::cout << "returninG"<< std::endl;
 	   }
 
          //MPI_Finalize(); //MPI Solution ///////////////////////////////////

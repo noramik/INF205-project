@@ -346,6 +346,7 @@ std::vector<Edge*> Graph::_analyse_graph(Parameters &params) {
  * @param[in] params, structure storing common information relevant for each recursion
 */
 void Graph::_iterate_forward(Edge* &edge, std::vector<Node*> stash, int current_index, Parameters &params) {
+    std::cout << "log: in iterate_forward" << std::endl;
     if (current_index == params.path.size()-1) { //the end of the sequence is reached
         stash.push_back(edge->get_head_node());  //save the end node
 
@@ -354,8 +355,13 @@ void Graph::_iterate_forward(Edge* &edge, std::vector<Node*> stash, int current_
             Parameters copy_params = params; // Shallow copy (keeps pointers to the same memory for all instances)
             copy_params.switch_parameters(); // switch from p to q or opposite
 
+            std::cout << "log_forward: comparing params pointers " << std::endl;//<< &params << " - " << &copy_params << std::endl;
+
+
             //Search for p or q matching start and end position of our current found sequence.
+            std::cout << "log_forward: search for match" << std::endl;
             _search_match(stash[0], stash, current_index, copy_params);
+            std::cout << "log_forwad: outside of search_match" << std::endl;
         }
 
         else { // at end of path, but the entire sequence is not yet found
@@ -367,6 +373,7 @@ void Graph::_iterate_forward(Edge* &edge, std::vector<Node*> stash, int current_
     }
 
     else if (!edge->get_head_node()->get_next_edges().empty()) {           // not a dangling node
+        std::cout << "log_forward: search for match" << std::endl;
         current_index++;
         for (Edge* &next_edge: edge->get_head_node()->get_next_edges()) {
 
@@ -440,12 +447,15 @@ void Graph::_iterate_backward(Edge* &edge, std::vector<Node*> stash, int current
  * @param[in] params, structure storing common information relevant for each recursion.
 */
 void Graph::_search_match(Node* node, std::vector<Node*> &stash, int current_index, Parameters &params) {
+    std::cout << "log: in search_match" << std::endl;
 
     if (current_index == params.path.size()-1) {// entire sequence found
+            std::cout << "log_match: at the end" << std::endl;
         if (node == stash.back()) { // the sequence's ending location matches that of the other sequence. A match is found!
 
             #pragma omp critical // OpenMP Solution ------------------
             {                    // OpenMP Solution  -----------------
+                std::cout << "pattern found by rank " << std::endl;
             params.found_patterns->insert(stash); // Save match
             }                    // OpenMP Solution  ------------------
 
@@ -455,6 +465,7 @@ void Graph::_search_match(Node* node, std::vector<Node*> &stash, int current_ind
     }
 
     else if (!node->get_next_edges().empty()) {// not a dangling node
+            std::cout << "log_match: search for match iterator" << std::endl;
         current_index++;
 
         for (Edge* &edge: node->get_next_edges()) {
@@ -514,16 +525,31 @@ std::set<std::vector<Node*>> Graph::find_pattern(int num_ranks, std::vector<std:
     params.found_patterns = &found_patterns;
     params.exit = &exit;
 
-
+    std::set<std::vector<Node*>> all_pairs; //REMOVE, do we want this?
 
     // STEP 2: Delegate starting edges between the ranks using a mathematical formula
     // -------
 
     // start parallel section
-    #pragma omp parallel //OpenMP Solution -----------------------
+    #pragma omp parallel private(params)//OpenMP Solution -----------------------
     {                    //OpenMP Solution -----------------------
-    // get current rank
+     // get current rank
     int rank = omp_get_thread_num(); // OpenMP SOLUTION -------------------
+
+      // new tester solution
+      /*
+    std::set<std::vector<Node*>> found_patterns; // will collect all found patterns
+    std::cout << "RANK: " << rank << "with pointer" << &found_patterns;
+    params.found_patterns = &found_patterns;
+    std::cout << "RANK " << rank << "has pointer" << params.found_patterns << std::endl;
+    */
+    # pragma omp critical
+    {
+        std::cout << "RANK " << rank << "address params: " << &params << std::endl;
+        std::cout << "RANK " << rank << "address in par: " << &params.p << std::endl;
+    }
+
+
 
     int current_index = params.start_index;
 
@@ -555,28 +581,45 @@ std::set<std::vector<Node*>> Graph::find_pattern(int num_ranks, std::vector<std:
     for (Edge* &edge : rank_start_points) {
         std::vector<Node*> stash; // temporarily storage of start end end nodes of found paths. \
                                       each stack (level of recursion) will have its' own "stash".
-        params.start_edge = edge;
+        params.start_edge = edge; //BUG!
+
+        std::cout << "START POINTER: " << params.start_edge << "(rank)" << rank <<std::endl;
         if (params.start_index == 0) stash.push_back(edge->get_tail_node()); // if we start at the beginning
 
         // recursive function to iterate trough graph until patterns are found or not found
         _iterate_forward(edge, stash, current_index, params);
 
         if (*params.exit) break; // handle exit strategy. See structure Parameters for more
+        std::cout << "START POINTER_end: " << params.start_edge << "(rank)" << rank <<std::endl;
     }
+
+
+    #pragma omp critical
+    {
+        for (auto node_pairs: *params.found_patterns) {
+            all_pairs.insert(node_pairs);
+            std::cout << "rank" << rank <<" : " <<node_pairs[0]<< std::endl;
+
+        }
+    }
+
   } //pragma end //OpenMP Solution --------------
+    std::cout << "FINALLY HERE" << std::endl;
 
-
-// OpenMP Solution ---------------------------
-    //SHOW RESULTS
+    // Step 4: Print and return results
+    // -------
+    // OpenMP Solution ---------------------------
     if (params.found_patterns->empty()) {// do not have any containment:
          std::cout << "No such pattern exists in the graph." << std::endl;;
          return *params.found_patterns;
+         //return all_pairs;
     }
     else if (!return_nodes) {
         std::cout << "The requested pattern is found!" << std::endl;
         std::cout << "WARNING: The returned nodes might not be the only nodes connected by these paths" <<"\n"<<
                     "Set parameter return_nodes=true to see all connections."<<std::endl;
         return *params.found_patterns;
+        //return all_pairs;
     }
     else {
         std::cout << "The requested pattern is found! All connections found is as follows:" <<  std::endl;
@@ -584,6 +627,7 @@ std::set<std::vector<Node*>> Graph::find_pattern(int num_ranks, std::vector<std:
             std::cout << "Pair: " << node_pairs[0]->get_label() << " - " << node_pairs[1]->get_label() << std::endl;
          }
         return *params.found_patterns;
+        //return all_pairs;
     }
 } //OpenMP Solution -------------- end */
 
@@ -659,7 +703,8 @@ std::set<std::vector<Node*>> Graph::find_pattern(int num_ranks, std::vector<std:
             }
         }
 
-    // SHOW RESULTS:
+    // Step 4: Print and return results
+    // -------
     if (all_pairs.empty()) {
          std::cout << "No such pattern exists in the graph." << std::endl;
     }
