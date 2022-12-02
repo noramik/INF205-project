@@ -29,7 +29,7 @@ struct Graph::Parameters{
 
     // "found_patterns" and "exit" are global pointers for all instances of the structure for each rank
     // The variables are common for all instances.
-    std::set<std::vector<Node*>>* found_patterns; //start and end nodes connected by both p and q in pairs
+    std::set<std::vector<const Node*>>* found_patterns; //start and end nodes connected by both p and q in pairs
     bool* exit; //set to true if pattern match is found and "return_nodes" is false.\
                   Used to exit recursions efficiently.
 
@@ -60,22 +60,22 @@ struct Graph::Parameters{
     @param[in] params, structure holding general information
     @param[in] counted_instances, a map of edge labels and their corresponding number of instances in the graph
 */
-std::vector<Edge*> Graph::_analyse_path_edges(const bool start, Parameters &params, std::map<std::string,int> &counted_instances) {
+std::vector<const Edge*> Graph::_analyse_path_edges(const bool start, Parameters &params, const std::map<std::string,int> &counted_instances) {
 
-    std::vector<Edge*> start_points; // vector to be returned
+    std::vector<const Edge*> start_points; // vector to be returned
 
     int requirement = floor (this->get_num_edges()/3); // This can be changed as wanted
 
     // choose the labels corresponding to whether we investigate the start or ending nodes
-    std::string p_label = (start) ? params.p[0] : params.p.back();
-    std::string q_label = (start) ? params.q[0] : params.q.back();
+    const std::string p_label = (start) ? params.p[0] : params.p.back();
+    const std::string q_label = (start) ? params.q[0] : params.q.back();
 
     Node* node; // holds temporary nodes investigated for its' "next_labels"
-    std::vector<Edge*> vec_p = this->get_edges().at(p_label); // all edges with label p_label
-    std::vector<Edge*> vec_q = this->get_edges().at(q_label); // all edges with label q_label
+    const std::vector<const Edge*> vec_p = this->get_edges().at(p_label); // all edges with label p_label
+    const std::vector<const Edge*> vec_q = this->get_edges().at(q_label); // all edges with label q_label
 
     // investigate the label with the fewest instances only if requirements are fulfilled
-    if (counted_instances[p_label] <= counted_instances[q_label] && counted_instances[p_label] < requirement) {
+    if (counted_instances.at(p_label) <= counted_instances.at(q_label) && counted_instances.at(p_label) < requirement) {
         // search for q_label in "next_edges" to node connected to edges with p_label
 
         params.path_letter = 'p';
@@ -88,12 +88,12 @@ std::vector<Edge*> Graph::_analyse_path_edges(const bool start, Parameters &para
             if (start) { // investigating starting edges
                 node = vec_p[idx]->get_tail_node();
                 start_index = 0;
-                for (auto &edge: node->get_next_edges()) {potential_edges.push_back(edge->get_label());}
+                for (const auto &edge: node->get_next_edges()) {potential_edges.push_back(edge->get_label());}
             }
             else { // investigating ending edges
                 node = vec_p[idx]->get_head_node();
                 start_index = params.path.size()-1;
-                for (auto &edge: node->get_next_edges()) {potential_edges.push_back(edge->get_label());}
+                for (const auto &edge: node->get_next_edges()) {potential_edges.push_back(edge->get_label());}
             }
 
             //search for instance of q_label among potential_edges
@@ -109,7 +109,7 @@ std::vector<Edge*> Graph::_analyse_path_edges(const bool start, Parameters &para
         return start_points;
     }
 
-    else if (counted_instances[q_label] < requirement) {
+    else if (counted_instances.at(q_label) < requirement) {
         // REMOVE: DUPLICATE
         // search for p_label in "next_edges" to node connected to edges with q_label
 
@@ -121,14 +121,14 @@ std::vector<Edge*> Graph::_analyse_path_edges(const bool start, Parameters &para
             std::vector<std::string> potential_edges; //edge_labels to search for instance of both p- and q_label among \
                                                         for each iteration
             if (start) {// investigating starting edges
-                Node* node = vec_q[idx]->get_tail_node();
+                node = vec_q[idx]->get_tail_node();
                 start_index = 0;
-                for (auto &edge: node->get_next_edges()) {potential_edges.push_back(edge->get_label());}
+                for (const auto &edge: node->get_next_edges()) {potential_edges.push_back(edge->get_label());}
             }
             else {// investigating ending edges
-                Node* node = vec_q[idx]->get_head_node();
+                node = vec_q[idx]->get_head_node();
                 start_index = params.path.size()-1;
-                for (auto &edge: node->get_next_edges()) {potential_edges.push_back(edge->get_label());}
+                for (const auto &edge: node->get_next_edges()) {potential_edges.push_back(edge->get_label());}
             }
 
             // search for instance of q_label among potential_edges
@@ -179,8 +179,8 @@ std::vector<Edge*> Graph::_analyse_path_edges(const bool start, Parameters &para
          Edgelabels are prioritized after number of instances (fewer are valued more)
          The longest sequence with an instance of the edge label are chosen for the initial traversals.
 */
-std::vector<Edge*> Graph::_analyse_graph(Parameters &params) {
-    std::vector<Edge*> start_points;  // vector to be returned
+std::vector<const Edge*> Graph::_analyse_graph(Parameters &params) {
+    std::vector<const Edge*> start_points;  // vector to be returned
 
     // Step 1
     // -------
@@ -194,7 +194,7 @@ std::vector<Edge*> Graph::_analyse_graph(Parameters &params) {
                 std::inserter(unique_labels, unique_labels.begin()));
 
     // Count number of instances and add to map "counted_instances"
-    for (auto &edge_label: unique_labels) {
+    for (const auto &edge_label: unique_labels) {
 
         int num_instances; // temporary holds number of instances of different edge labels
 
@@ -345,7 +345,7 @@ std::vector<Edge*> Graph::_analyse_graph(Parameters &params) {
                 Each stack has its' own copy and current_index is only increased after moving to the next stack (level of recursion) for consistency.
  * @param[in] params, structure storing common information relevant for each recursion
 */
-void Graph::_iterate_forward(Edge* &edge, std::vector<Node*> stash, int current_index, Parameters &params) {
+void Graph::_iterate_forward(const Edge* &edge, std::vector<const Node*> stash, int current_index, Parameters &params, const Edge* &start_edge) {
     if (current_index == params.path.size()-1) { //the end of the sequence is reached
         stash.push_back(edge->get_head_node());  //save the end node
 
@@ -361,17 +361,18 @@ void Graph::_iterate_forward(Edge* &edge, std::vector<Node*> stash, int current_
         else { // at end of path, but the entire sequence is not yet found
                // start iterating backwards from our initial starting point, to search for the rest of the sequence
             int current_index = params.start_index;
-            _iterate_backward(params.start_edge, stash, current_index, params);
+            //_iterate_backward(params.start_edge, stash, current_index, params);
+            _iterate_backward(start_edge, stash, current_index, params);
         }
         if (*params.exit) return;            // handle exit strategy. See structure Parameters for more
     }
 
     else if (!edge->get_head_node()->get_next_edges().empty()) {           // not a dangling node
         current_index++;
-        for (Edge* &next_edge: edge->get_head_node()->get_next_edges()) {
+        for (const Edge* next_edge: edge->get_head_node()->get_next_edges()) {
 
             if (next_edge->get_label() == params.path[current_index]) {    // match found
-                _iterate_forward(next_edge, stash, current_index, params); // keep recursing forward
+                _iterate_forward(next_edge, stash, current_index, params, start_edge); // keep recursing forward
                 if (*params.exit) return;    // handle exit strategy. See structure Parameters for more
             }
         }
@@ -399,7 +400,7 @@ void Graph::_iterate_forward(Edge* &edge, std::vector<Node*> stash, int current_
                 Each stack has its' own copy and current_index is only decreased after moving to the next stack (level of recursion) for consistency.
  * @param[in] params, structure storing common information relevant for each recursion
 */
-void Graph::_iterate_backward(Edge* &edge, std::vector<Node*> stash, int current_index, Parameters &params) {
+void Graph::_iterate_backward(const Edge* &edge, std::vector<const Node*> stash, int current_index, Parameters &params) {
     if (current_index == 0) {                               // reached the beginning
         stash.insert(stash.begin(), edge->get_tail_node()); //store the beginning node as the first element in stash
 
@@ -415,7 +416,7 @@ void Graph::_iterate_backward(Edge* &edge, std::vector<Node*> stash, int current
     else if (!edge->get_tail_node()->get_prev_edges().empty()) {       // not a dangling node
         current_index--;
 
-        for (Edge* &edge: edge->get_tail_node()->get_prev_edges()) {
+        for (const Edge* edge: edge->get_tail_node()->get_prev_edges()) {
             if (edge->get_label() == params.path[current_index]) {     // match found
                 _iterate_backward(edge, stash, current_index, params); // keep recursing backward
                 if (*params.exit) return; // handle exit strategy. See structure Parameters for more
@@ -439,15 +440,16 @@ void Graph::_iterate_backward(Edge* &edge, std::vector<Node*> stash, int current
                 Each stack has its' own copy and current_index is only increased after moving to the next stack (level of recursion) for consistency.
  * @param[in] params, structure storing common information relevant for each recursion.
 */
-void Graph::_search_match(Node* node, std::vector<Node*> &stash, int current_index, Parameters &params) {
+void Graph::_search_match(const Node* node, const std::vector<const Node*> &stash, int current_index, Parameters &params) {
 
     if (current_index == params.path.size()-1) {// entire sequence found
         if (node == stash.back()) { // the sequence's ending location matches that of the other sequence. A match is found!
 
             #pragma omp critical // OpenMP Solution ------------------
+
             {                    // OpenMP Solution  -----------------
             params.found_patterns->insert(stash); // Save match
-            }                    // OpenMP Solution  ------------------
+            }                   // OpenMP Solution  ------------------
 
             if (!params.return_nodes) *params.exit = true; // handle exit strategy. See structure Parameters for more
         }
@@ -457,7 +459,7 @@ void Graph::_search_match(Node* node, std::vector<Node*> &stash, int current_ind
     else if (!node->get_next_edges().empty()) {// not a dangling node
         current_index++;
 
-        for (Edge* &edge: node->get_next_edges()) {
+        for (const Edge* edge: node->get_next_edges()) {
             if (edge->get_label() == params.path[current_index]) {// match found
                 _search_match(edge->get_head_node(), stash, current_index, params); // keep recursing forward
                 if (*params.exit) return; // handle exit strategy. See structure Parameters for more
@@ -489,7 +491,7 @@ void Graph::_search_match(Node* node, std::vector<Node*> &stash, int current_ind
 //std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes) { //return_nodes=false as default
 
 // OpenMP Solution ---------------
-std::set<std::vector<Node*>> Graph::find_pattern(int num_ranks, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes) { //return_nodes=false as default
+std::set<std::vector<const Node*>> Graph::find_pattern (const int num_ranks, const std::vector<std::string> p, const std::vector<std::string> q, const bool return_nodes) { //return_nodes=false as default
 
     // STEP 1: Initialize parameter, and analyse graph to find starting edges
     // ------
@@ -509,7 +511,7 @@ std::set<std::vector<Node*>> Graph::find_pattern(int num_ranks, std::vector<std:
     }
 
     // Create "global" variables common for all instances of the structure Parameters
-    std::set<std::vector<Node*>> found_patterns; // will collect all found patterns
+    std::set<std::vector<const Node*>> found_patterns; // will collect all found patterns
     bool exit = false; // by default
     params.found_patterns = &found_patterns;
     params.exit = &exit;
@@ -535,7 +537,7 @@ std::set<std::vector<Node*>> Graph::find_pattern(int num_ranks, std::vector<std:
     int a = floor(num_points/num_ranks);
     int b = num_points%num_ranks;
 
-    std::vector<Edge*> rank_start_points; // a rank's starting points
+    std::vector<const Edge*> rank_start_points; // a rank's starting points
     if (rank < b) {
         int start_pos = rank + rank*a;
         for(auto it=starting_points.begin() + start_pos; it != starting_points.begin() + (start_pos + a+1); it++) {
@@ -552,15 +554,18 @@ std::set<std::vector<Node*>> Graph::find_pattern(int num_ranks, std::vector<std:
 
     // STEP 3: Start traversing the graph in search for matches
     // -------
-    for (Edge* &edge : rank_start_points) {
-        std::vector<Node*> stash; // temporarily storage of start end end nodes of found paths. \
+    for (const Edge* edge : rank_start_points) {
+        std::vector<const Node*> stash; // temporarily storage of start end end nodes of found paths. \
                                       each stack (level of recursion) will have its' own "stash".
-        params.start_edge = edge;
+        //params.start_edge = edge; // BUG
+
+        const Edge* start_edge = edge;
+        std::cout << "RANK: " << rank << "with start " << start_edge << std::endl;
         if (params.start_index == 0) stash.push_back(edge->get_tail_node()); // if we start at the beginning
 
         // recursive function to iterate trough graph until patterns are found or not found
-        _iterate_forward(edge, stash, current_index, params);
-
+        _iterate_forward(edge, stash, current_index, params, start_edge);
+        std::cout << "RANK_end: " << rank << "with start " << start_edge << std::endl;
         if (*params.exit) break; // handle exit strategy. See structure Parameters for more
     }
   } //pragma end //OpenMP Solution --------------
@@ -580,9 +585,12 @@ std::set<std::vector<Node*>> Graph::find_pattern(int num_ranks, std::vector<std:
     }
     else {
         std::cout << "The requested pattern is found! All connections found is as follows:" <<  std::endl;
-        for (auto &node_pairs: *params.found_patterns) {
+        int counter = 0;
+        for (const auto &node_pairs: *params.found_patterns) {
             std::cout << "Pair: " << node_pairs[0]->get_label() << " - " << node_pairs[1]->get_label() << std::endl;
+            counter++;
          }
+         std::cout << "number of elements" << counter << std::endl;
         return *params.found_patterns;
     }
 } //OpenMP Solution -------------- end */

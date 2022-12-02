@@ -33,7 +33,7 @@ using namespace graph;
 
 		if (this->edges.find(edge_label) == this->edges.end()) // Checks whether the label is in the map
 		{
-			std::vector<Edge*> e; // intializes vector of Edge*
+			std::vector<const Edge*> e; // intializes vector of Edge*
 			e.push_back(new_edge); //Adds new_edge to vector
 			this->edges.insert({edge_label, e}); // inserts into the edges map with edge_label as key and the vector of Edge* as value.
 			this->num_edges++; // Counts the total number of edges in the graph.
@@ -58,7 +58,7 @@ using namespace graph;
 		   // Access the vector of Edge*, then iterate through each Edge* element in that vector and deallocate.
 		   for (auto iter = this->edges.begin(); iter != this->edges.end(); iter++)
 		   {
-			   std::vector<Edge*> edge_vector = iter->second;
+			   std::vector<const Edge*> edge_vector = iter->second;
 			   for (auto x=edge_vector.begin(); x != edge_vector.end(); x++)
 				   {
 				   delete *x; //Deleting the edge. This is being dereferenced because we want to delete the edge pointer not the iterator.
@@ -85,7 +85,7 @@ using namespace graph;
 		std::clog << "\tlog output: calling Graph copy constructor\n\t\t(this == " << this << ")\n";
 		for(auto it = orig.edges.begin(); it != orig.edges.end(); it++)
 		{
-			std::vector<Edge*> edge_vec = it->second;
+			std::vector<const Edge*> edge_vec = it->second;
 			for(auto vec_it = edge_vec.begin(); vec_it != edge_vec.end(); vec_it++)
 			{
 				// Access edge label, head node label and tail node label and give them as parameters to create_edge function.
@@ -205,7 +205,7 @@ using namespace graph;
 	{
 		for (auto it = this->edges.begin(); it != this->edges.end(); it++)
 		{
-			std::vector<Edge*> edge_vec = it->second;
+			std::vector<const Edge*> edge_vec = it->second;
 
 			for (auto edge_it = edge_vec.begin(); edge_it != edge_vec.end(); edge_it++)
 			{
