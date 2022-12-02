@@ -560,12 +560,10 @@ std::set<std::vector<const Node*>> Graph::find_pattern (const int num_ranks, con
         //params.start_edge = edge; // BUG
 
         const Edge* start_edge = edge;
-        std::cout << "RANK: " << rank << "with start " << start_edge << std::endl;
         if (params.start_index == 0) stash.push_back(edge->get_tail_node()); // if we start at the beginning
 
         // recursive function to iterate trough graph until patterns are found or not found
         _iterate_forward(edge, stash, current_index, params, start_edge);
-        std::cout << "RANK_end: " << rank << "with start " << start_edge << std::endl;
         if (*params.exit) break; // handle exit strategy. See structure Parameters for more
     }
   } //pragma end //OpenMP Solution --------------
@@ -590,7 +588,6 @@ std::set<std::vector<const Node*>> Graph::find_pattern (const int num_ranks, con
             std::cout << "Pair: " << node_pairs[0]->get_label() << " - " << node_pairs[1]->get_label() << std::endl;
             counter++;
          }
-         std::cout << "number of elements" << counter << std::endl;
         return *params.found_patterns;
     }
 } //OpenMP Solution -------------- end */
