@@ -70,16 +70,16 @@ int main(int argc, char** argv)
 
 
 	   std::cout << "RUNNING ALGORITHM" <<std::endl;
-	   std::vector<std::string> p{"is", "is"};
-	   std::vector<std::string> q{"is", "is"};
+	   const std::vector<std::string> p{"r1", "r2", "r4", "r6"};
+	   const std::vector<std::string> q{"r0", "r2", "r4", "r6"};
 
-       int num_tests = 10000;
+       int num_tests = 100;
 
 	   auto t0 = std::chrono::high_resolution_clock::now();
 
 	   for (int i=0; i<num_tests; i++) {
              //std::set<std::vector<graph::Node*>> k = g.find_pattern(rank, size, p, q, true); //MPI Solution ///////////////////////////////////
-            std::set<std::vector<graph::Node*>> k = g.find_pattern(num_threads, p, q, true); // OpenMP Solution --------------------------------
+            std::set<std::vector<const graph::Node*>> k = g.find_pattern(num_threads, p, q, true); // OpenMP Solution --------------------------------
 	   }
 
          //MPI_Finalize(); //MPI Solution ///////////////////////////////////
