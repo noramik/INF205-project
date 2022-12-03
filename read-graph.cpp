@@ -51,7 +51,7 @@ int main(int argc, char** argv)
 
 	   graph::Graph g;
 	   indata >> g;
-	   std::cout << g;
+	   //std::cout << g;
 	   /* This is how a path would be read when you need it.
 	   std::ifstream pathdata(argv[2]);
 	   if(!pathdata)
@@ -71,19 +71,15 @@ int main(int argc, char** argv)
 
 	   std::cout << "RUNNING ALGORITHM" <<std::endl;
 	   const std::vector<std::string> p{"r1", "r2", "r4", "r6"};
-	   const std::vector<std::string> q{"r0", "r2", "r4", "r6"};
+	   const std::vector<std::string> q{"r1", "r2", "r4", "r6"};
 
-       int num_tests = 100;
+       int num_tests = 1;
 
 	   auto t0 = std::chrono::high_resolution_clock::now();
 
 	   for (int i=0; i<num_tests; i++) {
-             //std::set<std::vector<graph::Node*>> k = g.find_pattern(rank, size, p, q, true); //MPI Solution ///////////////////////////////////
-            std::set<std::vector<const graph::Node*>> k = g.find_pattern(num_threads, p, q, true); // OpenMP Solution --------------------------------
+            std::set<std::vector<const graph::Node*>> k = g.find_pattern(num_threads, p, q, true);
 	   }
-
-         //MPI_Finalize(); //MPI Solution ///////////////////////////////////
-
 
         auto t1 = std::chrono::high_resolution_clock::now();
         std::cout << "Time measurement: " << std::chrono::duration_cast<std::chrono::microseconds>(t1-t0).count()/ (double)num_tests << "ms" << std::endl;

@@ -89,15 +89,8 @@ namespace graph
     void out(std::ostream* target){print_graph(target);} // Writes to *target
     void print_graph(std::ostream* target); // Prints the graph.
     int get_num_edges() const {return this->num_edges;} // Returns total number of edges in the graph
-	/*
 
-	Node* get_node_pointer_by_unique_label() (?)
-    */
-
-
-    //std::set<std::vector<Node*>> find_pattern(int rank, int size, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes=false); //MPI Solution //////////
-    std::set<std::vector<const Node*>> find_pattern (const int num_ranks, const std::vector<std::string> p, const std::vector<std::string> q, const bool return_nodes=false); //OpenMP Solution ----------
-
+    std::set<std::vector<const Node*>> find_pattern (const int num_ranks, const std::vector<std::string> p, const std::vector<std::string> q, const bool return_nodes=false);
 
 	~Graph();// Destructor
 	Graph(const Graph& orig); // Copy constructor
@@ -118,10 +111,13 @@ namespace graph
     // perform an analysis of the graph to provide "find_pattern" with wise starting points
 	std::vector<const Edge*> _analyse_graph(Parameters &params);
     // special scenario of analysis
-	std::vector<const Edge*> _analyse_path_edges(const bool start, Parameters &params, const std::map<std::string,int> &counted_instances);
-    void _iterate_forward(const Edge* &edge, std::vector<const Node*> stash, int current_index, Parameters &params, const Edge* &start_edge);  // recursive pattern-searching function
-	void _iterate_backward(const Edge* &edge, std::vector<const Node*> stash, int current_index, Parameters &params); // recursive pattern-searching function
-	void _search_match(const Node* node, const std::vector<const Node*> &stash, int current_index, Parameters &params);     // recursive pattern-searching function
+	std::vector<const Edge*> _analyse_path_edges(const bool start, Parameters &params, const std::map<const std::string,int> &counted_instances);
+    void _iterate_forward(const Edge* &edge, std::vector<const Node*> stash, int current_index, const Parameters &params, const Edge* &start_edge,
+                          std::set<std::vector<const Node*>> &found_patterns);  // recursive pattern-searching function
+	void _iterate_backward(const Edge* &edge, std::vector<const Node*> stash, int current_index, const Parameters &params,
+                            std::set<std::vector<const Node*>> &found_patterns); // recursive pattern-searching function
+	void _search_match(const Node* node, const std::vector<const Node*> &stash, int current_index, Parameters &params,
+                            std::set<std::vector<const Node*>> &found_patterns);     // recursive pattern-searching function
 	};
 
 }

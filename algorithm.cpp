@@ -9,9 +9,7 @@
 #include <string>
 
 #include "graph.h"
-
-//#include <mpi.h> //MPI SOLUTION ///////////////////
-#include <omp.h> // OpenMP SOLUTION ----------------
+#include <omp.h>
 
 
 using namespace graph;
@@ -23,7 +21,6 @@ using namespace graph;
 */
 struct Graph::Parameters{
 
-    Edge* start_edge;    //traversal starts here. Updated for each starting point
     int start_index;     //starting index in sequence. Used to orient traversals
     bool return_nodes;   // user input
 
@@ -60,7 +57,7 @@ struct Graph::Parameters{
     @param[in] params, structure holding general information
     @param[in] counted_instances, a map of edge labels and their corresponding number of instances in the graph
 */
-std::vector<const Edge*> Graph::_analyse_path_edges(const bool start, Parameters &params, const std::map<std::string,int> &counted_instances) {
+std::vector<const Edge*> Graph::_analyse_path_edges(const bool start, Parameters &params, const std::map<const std::string,int> &counted_instances) {
 
     std::vector<const Edge*> start_points; // vector to be returned
 
@@ -185,7 +182,7 @@ std::vector<const Edge*> Graph::_analyse_graph(Parameters &params) {
     // Step 1
     // -------
     // Map with edge labels as keys and their number of instances in the graph as value
-    std::map<std::string,int> counted_instances;
+    std::map<const std::string, int> counted_instances;
 
     // Extract all unique labels from input sequences p and q
     std::set<std::string> unique_labels;
@@ -344,8 +341,13 @@ std::vector<const Edge*> Graph::_analyse_graph(Parameters &params) {
  * @param[in] current_index. The current index in the sequence which are searched for.
                 Each stack has its' own copy and current_index is only increased after moving to the next stack (level of recursion) for consistency.
  * @param[in] params, structure storing common information relevant for each recursion
+ * @param[in] start_edge, the initial edge this main-iteration started from. Is used to navigate to the right edge when moving
+                from _iterate_forward to _iterate_backward.
+                This is unique for each rank, and cannot be saved in the shared structure "params".
+ * @param[in] found_patterns, local vector (for each rank) for storing all found patterns.
 */
-void Graph::_iterate_forward(const Edge* &edge, std::vector<const Node*> stash, int current_index, Parameters &params, const Edge* &start_edge) {
+void Graph::_iterate_forward(const Edge* &edge, std::vector<const Node*> stash, int current_index, const Parameters &params, const Edge* &start_edge,
+                             std::set<std::vector<const Node*>> &found_patterns) {
     if (current_index == params.path.size()-1) { //the end of the sequence is reached
         stash.push_back(edge->get_head_node());  //save the end node
 
@@ -355,14 +357,13 @@ void Graph::_iterate_forward(const Edge* &edge, std::vector<const Node*> stash, 
             copy_params.switch_parameters(); // switch from p to q or opposite
 
             //Search for p or q matching start and end position of our current found sequence.
-            _search_match(stash[0], stash, current_index, copy_params);
+            _search_match(stash[0], stash, current_index, copy_params, found_patterns);
         }
 
         else { // at end of path, but the entire sequence is not yet found
                // start iterating backwards from our initial starting point, to search for the rest of the sequence
             int current_index = params.start_index;
-            //_iterate_backward(params.start_edge, stash, current_index, params);
-            _iterate_backward(start_edge, stash, current_index, params);
+            _iterate_backward(start_edge, stash, current_index, params, found_patterns);
         }
         if (*params.exit) return;            // handle exit strategy. See structure Parameters for more
     }
@@ -372,7 +373,7 @@ void Graph::_iterate_forward(const Edge* &edge, std::vector<const Node*> stash, 
         for (const Edge* next_edge: edge->get_head_node()->get_next_edges()) {
 
             if (next_edge->get_label() == params.path[current_index]) {    // match found
-                _iterate_forward(next_edge, stash, current_index, params, start_edge); // keep recursing forward
+                _iterate_forward(next_edge, stash, current_index, params, start_edge, found_patterns); // keep recursing forward
                 if (*params.exit) return;    // handle exit strategy. See structure Parameters for more
             }
         }
@@ -399,8 +400,10 @@ void Graph::_iterate_forward(const Edge* &edge, std::vector<const Node*> stash, 
  * @param[in] current_index. The current index in the sequence which are searched for.
                 Each stack has its' own copy and current_index is only decreased after moving to the next stack (level of recursion) for consistency.
  * @param[in] params, structure storing common information relevant for each recursion
+ * @param[in] found_patterns, local vector (for each rank) for storing all found patterns.
 */
-void Graph::_iterate_backward(const Edge* &edge, std::vector<const Node*> stash, int current_index, Parameters &params) {
+void Graph::_iterate_backward(const Edge* &edge, std::vector<const Node*> stash, int current_index, const Parameters &params,
+                              std::set<std::vector<const Node*>> &found_patterns) {
     if (current_index == 0) {                               // reached the beginning
         stash.insert(stash.begin(), edge->get_tail_node()); //store the beginning node as the first element in stash
 
@@ -409,7 +412,7 @@ void Graph::_iterate_backward(const Edge* &edge, std::vector<const Node*> stash,
          copy_params.switch_parameters(); // switch from p to q or opposite
          current_index = -1;              // Will be increased by _search_match
          //Search for p or q matching start and end position of our current found sequence.
-         _search_match(stash[0], stash, current_index, copy_params);
+         _search_match(stash[0], stash, current_index, copy_params, found_patterns);
          if (*params.exit) return;        // handle exit strategy. See structure Parameters for more
     }
 
@@ -418,7 +421,7 @@ void Graph::_iterate_backward(const Edge* &edge, std::vector<const Node*> stash,
 
         for (const Edge* edge: edge->get_tail_node()->get_prev_edges()) {
             if (edge->get_label() == params.path[current_index]) {     // match found
-                _iterate_backward(edge, stash, current_index, params); // keep recursing backward
+                _iterate_backward(edge, stash, current_index, params, found_patterns); // keep recursing backward
                 if (*params.exit) return; // handle exit strategy. See structure Parameters for more
             }
         }
@@ -439,18 +442,15 @@ void Graph::_iterate_backward(const Edge* &edge, std::vector<const Node*> stash,
  * @param[in] current_index. The current index in the sequence which are searched for.
                 Each stack has its' own copy and current_index is only increased after moving to the next stack (level of recursion) for consistency.
  * @param[in] params, structure storing common information relevant for each recursion.
+ * @param[in] found_patterns, local vector (for each rank) for storing all found patterns.
 */
-void Graph::_search_match(const Node* node, const std::vector<const Node*> &stash, int current_index, Parameters &params) {
+void Graph::_search_match(const Node* node, const std::vector<const Node*> &stash, int current_index, Parameters &params,
+                          std::set<std::vector<const Node*>> &found_patterns) {
 
     if (current_index == params.path.size()-1) {// entire sequence found
         if (node == stash.back()) { // the sequence's ending location matches that of the other sequence. A match is found!
 
-            #pragma omp critical // OpenMP Solution ------------------
-
-            {                    // OpenMP Solution  -----------------
-            params.found_patterns->insert(stash); // Save match
-            }                   // OpenMP Solution  ------------------
-
+            found_patterns.insert(stash);
             if (!params.return_nodes) *params.exit = true; // handle exit strategy. See structure Parameters for more
         }
         return;
@@ -461,7 +461,7 @@ void Graph::_search_match(const Node* node, const std::vector<const Node*> &stas
 
         for (const Edge* edge: node->get_next_edges()) {
             if (edge->get_label() == params.path[current_index]) {// match found
-                _search_match(edge->get_head_node(), stash, current_index, params); // keep recursing forward
+                _search_match(edge->get_head_node(), stash, current_index, params, found_patterns); // keep recursing forward
                 if (*params.exit) return; // handle exit strategy. See structure Parameters for more
             }
         }
@@ -486,11 +486,6 @@ void Graph::_search_match(const Node* node, const std::vector<const Node*> &stas
                The recursions will exit immediately if return_nodes is set to false, and a match has been found,
                using the parameter "exit" in structure Parameters, which is common for all instances of this object.
 */
-
-//MPI solution //////////////////
-//std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes) { //return_nodes=false as default
-
-// OpenMP Solution ---------------
 std::set<std::vector<const Node*>> Graph::find_pattern (const int num_ranks, const std::vector<std::string> p, const std::vector<std::string> q, const bool return_nodes) { //return_nodes=false as default
 
     // STEP 1: Initialize parameter, and analyse graph to find starting edges
@@ -501,7 +496,7 @@ std::set<std::vector<const Node*>> Graph::find_pattern (const int num_ranks, con
     params.p = p;
     params.q = q;
 
-    auto starting_points = _analyse_graph(params); // fetch the edges the traversals will start at by performing an analysis of the graph
+    const auto starting_points = _analyse_graph(params); // fetch the edges the traversals will start at by performing an analysis of the graph
 
     // The analysis might return an empty vector, indicating that no such pattern as requested can be found in the graph.
     // Terminate the code immediately.
@@ -516,61 +511,44 @@ std::set<std::vector<const Node*>> Graph::find_pattern (const int num_ranks, con
     params.found_patterns = &found_patterns;
     params.exit = &exit;
 
-
-
-    // STEP 2: Delegate starting edges between the ranks using a mathematical formula
+    // STEP 2: Start traversing the graph in search for matches using parallelization
     // -------
 
     // start parallel section
-    #pragma omp parallel //OpenMP Solution -----------------------
-    {                    //OpenMP Solution -----------------------
-    // get current rank
-    int rank = omp_get_thread_num(); // OpenMP SOLUTION -------------------
-
+    #pragma omp parallel
+    {
     int current_index = params.start_index;
+    std::set<std::vector<const Node*>> found_patterns;
 
-    // use formula to extract starting points for each rank
-    // The formula uses the total number of found starting points, the total number of ranks and the value of the current rank \
-        to extract the starting points.
-    // If there are more ranks than starting points, they will be left with no starting points, and terminate.
-    int num_points = starting_points.size();
-    int a = floor(num_points/num_ranks);
-    int b = num_points%num_ranks;
+    // Parallelize the starting_points
+    // nowait removes the default barrier at the end of the for loop
+    # pragma omp for nowait
+    for (int i = 0; i < starting_points.size(); i++) {
+        if (!*params.exit) { // handle exit strategy. See structure Parameters for more
 
-    std::vector<const Edge*> rank_start_points; // a rank's starting points
-    if (rank < b) {
-        int start_pos = rank + rank*a;
-        for(auto it=starting_points.begin() + start_pos; it != starting_points.begin() + (start_pos + a+1); it++) {
-            rank_start_points.push_back(*it);
-        }
-    }
-    else {
-        int start_pos = a*(rank - b) + b*(a + 1);
-        for (auto it=starting_points.begin() + start_pos; it != starting_points.begin() + (start_pos+a); it++) {
-            rank_start_points.push_back(*it);
+            std::vector<const Node*> stash; // temporarily storage of start end end nodes of found paths. \
+                                          each stack (level of recursion) will have its' own "stash".
+            const Edge* start_edge = starting_points[i]; // temporary storage of start edge for each iteration for each rank
+            if (params.start_index == 0) stash.push_back(start_edge->get_tail_node());// if we start at the beginning
+
+            // recursive function to iterate trough graph until patterns are found or not found
+            _iterate_forward(start_edge, stash, current_index, params, start_edge, found_patterns);
         }
     }
 
+    // collect all locally found patterns in each thread in a global variable.
+    // omp critical used to avoid race condition
+    #pragma omp critical
+    {
+        for (const auto pairs : found_patterns) {
+            params.found_patterns->insert(pairs);
+        }
+    }
+  }
 
-    // STEP 3: Start traversing the graph in search for matches
+
+    // STEP 3: Print and return results
     // -------
-    for (const Edge* edge : rank_start_points) {
-        std::vector<const Node*> stash; // temporarily storage of start end end nodes of found paths. \
-                                      each stack (level of recursion) will have its' own "stash".
-        //params.start_edge = edge; // BUG
-
-        const Edge* start_edge = edge;
-        if (params.start_index == 0) stash.push_back(edge->get_tail_node()); // if we start at the beginning
-
-        // recursive function to iterate trough graph until patterns are found or not found
-        _iterate_forward(edge, stash, current_index, params, start_edge);
-        if (*params.exit) break; // handle exit strategy. See structure Parameters for more
-    }
-  } //pragma end //OpenMP Solution --------------
-
-
-// OpenMP Solution ---------------------------
-    //SHOW RESULTS
     if (params.found_patterns->empty()) {// do not have any containment:
          std::cout << "No such pattern exists in the graph." << std::endl;;
          return *params.found_patterns;
@@ -583,109 +561,17 @@ std::set<std::vector<const Node*>> Graph::find_pattern (const int num_ranks, con
     }
     else {
         std::cout << "The requested pattern is found! All connections found is as follows:" <<  std::endl;
-        int counter = 0;
+        int counter = 0; //REMOVE
         for (const auto &node_pairs: *params.found_patterns) {
             std::cout << "Pair: " << node_pairs[0]->get_label() << " - " << node_pairs[1]->get_label() << std::endl;
-            counter++;
+            counter++; //REMOVE
          }
+        std::cout << "Number of found patterns is " << counter << std::endl;
         return *params.found_patterns;
     }
-} //OpenMP Solution -------------- end */
+}
 
 
-
-/*
- // MPI Solution /////////////////
-    // Collect all nodes on root node (rank 0)
-    // This is done by sending all the labels of the node pairs found, and translating them back to pointers on rank 0
-    // As rank 0 needs to know how much it is about to receive, all ranks first send the number of nodes it has found \
-        followed by how many characters each nodelabel consists of. \
-        Rank 0 stores this information in maps to prepare for receiving the actual character arrays. \
-        (MPI does not support strings, so all strings are translated into character arrays)
-
-    if (rank) { // every rank but rank 0
-        // Send number of nodes the current rank has found
-        int num_nodes = params.found_patterns->size()*2;
-        MPI_Send(&num_nodes, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
-
-        for (auto it : *params.found_patterns) {// for each pair in set
-
-            for (auto node : it) {// for each node in pair
-
-                //send number of characters in the nodelabel
-                const char* str = node->get_label().c_str();
-                int str_len = strlen(str);
-                MPI_Send(&str_len, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);
-
-                //send the actual nodelabel
-                MPI_Send(str, str_len+1, MPI_CHAR, 0, 2, MPI_COMM_WORLD);
-            }
-        }
-    }
-
-
-    if (rank == 0) {
-        std::map<int, int> recv_num_nodes; //number of nodes to receive
-        std::map<int, std::vector<int>> recv_len; //length of each node-label to receive
-        int temp; //temporary storage
-
-        std::set<std::vector<Node*>> all_pairs; // vector to save all found pairs received from all ranks
-        all_pairs = *params.found_patterns; // insert the pairs found on rank 0
-
-        // populate initialized maps
-        for (int _rank = 1; _rank < num_ranks; _rank++) {
-
-            // number of nodes
-            MPI_Recv(&recv_num_nodes[_rank], 1, MPI_INT, _rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-            // length of node labels for current rank being handled
-            for (int pos = 0; pos < recv_num_nodes[_rank]; pos++) {
-                MPI_Recv(&temp, 1, MPI_INT, _rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                recv_len[_rank].push_back(temp);
-            }
-        }
-
-        //receive labels
-        std::vector<Node*> temp_pair;
-        for (auto map_it : recv_len) { // example: map_it = {2: <4, 7, 6, 8>} (rank: vector of number of chracters for each node)
-
-            for (int len : map_it.second) { // for each "node"
-                // Initialize reciever
-                char str[len+1]; //character arrays adds '\0' which is why we add 1
-                MPI_Recv(str, len+1, MPI_CHAR, map_it.first, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-                //find node
-                temp_pair.push_back(this->get_nodes()[str]);
-
-                if (temp_pair.size() == 2) {// pair up
-                    all_pairs.insert(temp_pair);
-                    temp_pair.clear();
-                }
-            }
-        }
-
-    // SHOW RESULTS:
-    if (all_pairs.empty()) {
-         std::cout << "No such pattern exists in the graph." << std::endl;
-    }
-    else if (!return_nodes) { // return whether the requested pattern exists or not
-        std::cout << "The requested pattern is found!" << std::endl;
-        std::cout << "WARNING: The returned nodes might not be the only nodes connected by these paths" <<"\n"<<
-                    "Set parameter return_nodes=true to see all connections."<<std::endl;
-    }
-    else {
-        std::cout << "The requested pattern is found! All connections found is as follows:" <<  std::endl;
-        for (auto &node_pairs: all_pairs) {
-            std::cout << "Pair: " << node_pairs[0]->get_label() << " - " << node_pairs[1]->get_label() << std::endl;
-         }
-    }
-
-    return all_pairs;
-    }
-    std::set<std::vector<Node*>> empty_vec;
-    return empty_vec; //empty for all ranks but 0. Return for consistency
-
-} // MPI Solution ///////////////// end */
 
 
 
