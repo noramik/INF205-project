@@ -106,10 +106,35 @@ namespace graph
 	int num_edges = 0; // Total number of edges in the graph
 	bool generate_graph_from(std::istream* source); // Implementation of this copied from directed-graph example.
 
+
     // Private functions only relevant for function "find_pattern"
-    struct Parameters; // storage for important common values used by search algorithm in "find_pattern"
-    // perform an analysis of the graph to provide "find_pattern" with wise starting points
-	std::vector<const Edge*> _analyse_graph(Parameters &params);
+    // -----------------------------------------------------------
+    struct Parameters{ // storage for important common values used by search algorithm in "find_pattern";
+
+        int start_index;     //starting index in sequence. Used to orient traversals
+        bool return_nodes;   // user input
+
+        // "found_patterns" and "exit" are global pointers for all instances of the structure for each rank
+        // The variables are common for all instances.
+        std::set<std::vector<const Node*>>* found_patterns; //start and end nodes connected by both p and q in pairs
+        bool* exit; //set to true if pattern match is found and "return_nodes" is false.\
+                      Used to exit recursions efficiently.
+
+        char path_letter; // p or q
+        std::vector<std::string> p;     // first sequence from user input
+        std::vector<std::string> q;     // second sequence from user input
+        std::vector<std::string> path;  // current path we are traversing. Is either p or q above
+
+        // Change path and path_letter to the opposite of what we currently have.
+        // Used before the search for the second path (if the first is found) as it is unknown wether this is p or q.
+        void switch_parameters() {
+            this->path_letter = (this->path_letter == 'p') ? 'q' : 'p';
+            this->path = (this->path_letter == 'p') ? this->p : this->q;
+        }
+    };
+
+
+	std::vector<const Edge*> _analyse_graph(Parameters &params); // perform an analysis of the graph to provide "find_pattern" with wise starting points
     // special scenario of analysis
 	std::vector<const Edge*> _analyse_path_edges(const bool start, Parameters &params, const std::map<const std::string,int> &counted_instances);
     void _iterate_forward(const Edge* &edge, std::vector<const Node*> stash, int current_index, const Parameters &params, const Edge* &start_edge,
