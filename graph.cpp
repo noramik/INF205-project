@@ -152,7 +152,7 @@ using namespace graph;
 
 	}
 
-	// Implementation from lecture code - directed-graph, with minor changes.
+	// Implementation from lecture code - directed-graph (Martin Horsch).
 	// create a single edge based on information from the stream
 	// if it fails, return false, otherwise return true
 	bool Graph::generate_graph_from(std::istream* source)
@@ -216,7 +216,7 @@ using namespace graph;
 		}
 	}
 	 //I/O stream operator overloading for Graph
-	// Copied from lecture code
+	// Code from lecture code - directed graph (Martin Horsch)
 	std::istream& operator>>(std::istream& is, graph::Graph& g) {
 	   g.in(&is);
 	   return is;

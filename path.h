@@ -10,7 +10,7 @@
 namespace graph
 {
 /*
- * Our path class is based on query struct from directed-graph(lecture code).
+ * Our path class is based on query struct from lecture code - directed graph (Martin Horsch).
  */
 class Path
 {
