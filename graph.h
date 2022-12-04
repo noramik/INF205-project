@@ -104,7 +104,7 @@ namespace graph
 	// Map for nodes, label as key, Node pointer as value.
 	std::map<std::string, Node*> nodes = std::map<std::string, Node*>();
 	int num_edges = 0; // Total number of edges in the graph
-	bool generate_graph_from(std::istream* source); // Implementation of this copied from directed-graph example.
+	bool generate_graph_from(std::istream* source); // Implementation of this comes in graph.cpp comes from directed-graph example (Martin Horsch)
 
 
     // Private functions only relevant for function "find_pattern"
