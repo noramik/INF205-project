@@ -102,6 +102,7 @@ std::vector<Edge*> Graph::analyse_path_edges(const bool start, Parameters &param
 
 
     if (counted_instances[p_label] <= counted_instances[q_label] && counted_instances[p_label] < requirement) {
+
         //.... check for matching nodes
 
         params.path_letter = (params.p.size()>= params.q.size()) ? 'p' : 'q'; /*p or q: find which sequence is the largest*/
@@ -116,8 +117,8 @@ std::vector<Edge*> Graph::analyse_path_edges(const bool start, Parameters &param
         //for (Edge* const &edge_pointer : this->get_edges().at(p_label)) { //could it be a mistake here...?
         //for (auto edge_pointer = this->get_edges().at(p_label).begin(); edge_pointer != this->get_edges().at(p_label).end(); edge_pointer++) {
         for (int i = 0; i < vec_p.size(); i++) { //for--ranged loop created bug. not sure why. also iterator...
-            //for (Edge* edge_pointer : this->get_edges().at(p_label)) {std::cout << edge_pointer << "\t";}
             std::vector<std::string> potential_edges; //edges to search among
+
             if (start) {//if True
                 //std::cout << vec_p[i] << std::endl; //this is sometimes a nullpointer. Think this is fixed now
                 node = vec_p[i]->get_tail_node();
@@ -169,8 +170,10 @@ std::vector<Edge*> Graph::analyse_path_edges(const bool start, Parameters &param
             }
         }
 
+
         params.start_index = start_index;
-        if (start_points.empty()) {*params.exit = true;}
+        if (start_points.empty()) *params.exit = true;
+
         return start_points;
         // DUPLICATE END
     }
@@ -204,7 +207,9 @@ std::vector<Edge*> Graph::analyse_graph(Parameters &params) {
         catch (const std::out_of_range& oor){//{ //.at() will throw an out_of_range error
             std::cerr << "InputError: The provided label '"<<edge_label<< "' does not exist in the graph." << std::endl;
             //std::cerr << "Out of Range error: " << oor.what() << '\n';
+
             return start_points;
+
         }
 
         // Special case; If we have any unique edges, we choose the first appearance and stop the analysis
@@ -237,7 +242,6 @@ std::vector<Edge*> Graph::analyse_graph(Parameters &params) {
             params.path = (params.path_letter == 'p') ? params.p : params.q;
             return start_points;
         }
-
         // Add number of instances to the mapping
         counted_instances[edge_label] = num_instances;
     }
@@ -251,24 +255,27 @@ std::vector<Edge*> Graph::analyse_graph(Parameters &params) {
     const int q_0 = counted_instances[params.q[0]];
     const int q_m = counted_instances[params.q.back()];
 
+
     if (params.p[0] != params.q[0] && params.p.back() != params.q.back()) {
+
         //choose start or end based on fewest appearances. Priorotize beginning (lower or equal to)
         const int minima = std::min({p_0, p_n, q_0, q_m});
 
         if (minima == p_0 || minima == q_0) start_points = analyse_path_edges(true, params, counted_instances);
         else start_points = analyse_path_edges(false, params, counted_instances);
         if (!start_points.empty()) return start_points; // Make sure pointers is handled correctly
-
         // if analyse_path_edges left us with no possible starting points
         if (*params.exit) return start_points;
     }
 
     else if (params.p[0] != params.q[0]) {
+
         start_points = analyse_path_edges(true, params, counted_instances);
         if (!start_points.empty()) return start_points;
         if (*params.exit) return start_points;
     }
     else if (params.p.back() != params.q.back()) {
+
         start_points = analyse_path_edges(false, params, counted_instances);
         if (!start_points.empty()) return start_points;
         if (*params.exit) return start_points;
@@ -417,19 +424,24 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
     params.p = p;
     params.q = q;
 
-    auto starting_points = analyse_graph(params);
-
-    if (starting_points.empty()) {//Somehow check if starting points is empty:
-        std::cout << "No such pattern exists in the graph." << std::endl;
-        return *params.found_patterns;
-    }
-
-
     //Make global variables for each rank
     std::set<std::vector<Node*>> found_patterns;
     bool exit = false;
     params.found_patterns = &found_patterns;
     params.exit = &exit;
+
+    auto starting_points = analyse_graph(params);
+
+    if (starting_points.empty()) {//Somehow check if starting points is empty:
+
+        std::cout << "No such pattern exists in the graph." << std::endl;
+        return *params.found_patterns;
+    }
+
+
+
+
+
 
 
     int current_index = params.start_index; //each recursion need it's own in it's scope
@@ -470,6 +482,7 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
                               //Might CHANGE TO array of set size 2!!!
 
         params.start_edge = edge; //COPY
+
         if (params.start_index == 0) stash.push_back(edge->get_tail_node()); //if we start at the beginning //recursion will handle all else cases
 
         //using recursive function to iterate trough graph until patterns are found or not found
@@ -479,75 +492,70 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
 
 
 
-    // COLLECT ALL NODES ON RANK 0 (root)
+ // MPI Solution /////////////////
+    // Collect all nodes on root node (rank 0)
+    // This is done by sending all the labels of the node pairs found, and translating them back to pointers on rank 0
+    // As rank 0 needs to know how much it is about to receive, all ranks first send the number of nodes it has found \
+        followed by how many characters each nodelabel consists of. \
+        Rank 0 stores this information in maps to prepare for receiving the actual character arrays. \
+        (MPI does not support strings, so all strings are translated into character arrays)
 
-    // step 1: Figure out how many nodes each rank has found. This is the number of elements each rank will send to rank 0
-
+    // SENDING
     if (rank) {
-
-        // Send number of nodes
+        // Send number of nodes the current rank has found
         int num_nodes = params.found_patterns->size()*2;
         MPI_Send(&num_nodes, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
 
-        // for each pair in set
-        for (auto it : *params.found_patterns) {
+        for (auto it : *params.found_patterns) {// for each pair in set
             //for each node in pair
             for (auto node : it) {
 
-                //send number of characters
+                //send number of characters in the nodelabel
                 const char* str = node->get_label().c_str();
                 int str_len = strlen(str);
                 MPI_Send(&str_len, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);
 
-                //send label
+                //send the actual nodelabel
                 MPI_Send(str, str_len+1, MPI_CHAR, 0, 2, MPI_COMM_WORLD);
-
             }
         }
     }
 
-    std::set<std::vector<Node*>> all_pairs;
-
     // GATHERING
     if (rank == 0) {
-        std::map<int, int> recv_num_nodes; //number of nodes to recieve
-
-        std::map<int, std::vector<int>> recv_len; //length of each node-label to recieve
+        std::map<int, int> recv_num_nodes; //number of nodes to receive
+        std::map<int, std::vector<int>> recv_len; //length of each node-label to receive
         int temp; //temporary storage
 
-        std::set<std::vector<Node*>> all_pairs;
-        //insert the pairs from rank 0:
-        all_pairs = *params.found_patterns; //copy in
+        std::set<std::vector<Node*>> all_pairs; // vector to save all found pairs received from all ranks
+        all_pairs = *params.found_patterns; // insert the pairs found on rank 0
 
-
-        //add num_nodes to map from each rank
+        // populate initialized maps
         for (int _rank=1; _rank<num_ranks; _rank++) {
 
             // number of nodes
             MPI_Recv(&recv_num_nodes[_rank], 1, MPI_INT, _rank, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-            // length of node labels
+            // length of node labels for current rank being handled
             for (int pos = 0; pos < recv_num_nodes[_rank]; pos++) {
-                    //does not send or recieve 0 if no nodes..
                 MPI_Recv(&temp, 1, MPI_INT, _rank, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
                 recv_len[_rank].push_back(temp);
             }
         }
 
-
-        //recieve labels
+        //receive labels
         std::vector<Node*> temp_pair;
-        for (auto map_it : recv_len) {
+        for (auto map_it : recv_len) {//ex: map_it = {2: <4, 7, 6, 8>} (rank: vector of number of charachters for each node)
 
-            for (int len : map_it.second) {
-
-                char str[len+1]; //char adds '\0' which is wy we add 1
+            for (int len : map_it.second) {// for each "node"
+                // Initialize reciever
+                char str[len+1]; //char adds '\0' which is why we add 1
                 MPI_Recv(str, len+1, MPI_CHAR, map_it.first, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
                 //find node
-                temp_pair.push_back(this->get_nodes()[str]); //not pair
+                temp_pair.push_back(this->get_nodes()[str]);
 
-                if (temp_pair.size() == 2) {
+                if (temp_pair.size() == 2) {// pair up
                     all_pairs.insert(temp_pair);
                     temp_pair.clear();
                 }
@@ -567,7 +575,6 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
     }
     else {
         std::cout << "The requested pattern is found! All connections found is as follows:" <<  std::endl;
-
         for (auto node_pairs: all_pairs) { //*params.found_patterns
             std::cout << "Pair: " << node_pairs[0]->get_label() << " - " << node_pairs[1]->get_label() << std::endl;
          }
@@ -575,7 +582,8 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
     return all_pairs;
 }
 
-    return all_pairs; //empty for all ranks but 0
+     std::set<std::vector<Node*>> empty_vec;
+    return empty_vec; //empty for all ranks but 0. Return for consistency
 
 }
 
