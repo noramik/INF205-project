@@ -11,7 +11,14 @@
 //#include <unordered_map>
 
 #include "graph.h"
+
+ //MPI SOLUTION
 #include <mpi.h>
+
+
+// OpenMP SOLUTION
+//#include <omp.h>
+
 
 using namespace graph;
 
@@ -24,7 +31,7 @@ using namespace graph;
     /*
     1.1 Count instances
         1.1.1 Find unique edges in p and q
-        1.1.2 (gå inn i edge_mappingen of hent ut lengden av listene)
+        1.1.2 (gÃ¥ inn i edge_mappingen of hent ut lengden av listene)
                 Lagre antallet i en ny midlertidig map
 
     1.2 Sjekk requirements
@@ -88,19 +95,6 @@ std::vector<Edge*> Graph::analyse_path_edges(const bool start, Parameters &param
 
 
 
-    //DELETE. Did not work
-    /*
-    auto pointer_to_label = [&] (std::vector<Edge*>&& edge_pointers) {
-        //lambda not working 100% correctly
-        std::cout << "in lambda"<<std::endl;
-        std::vector<std::string> potential_edges_lambda; //edges to search among
-        for (auto &edge: edge_pointers) {
-            potential_edges_lambda.push_back(edge->get_label());
-        }
-        return potential_edges_lambda;
-    }; //local lambda function*/
-
-
     if (counted_instances[p_label] <= counted_instances[q_label] && counted_instances[p_label] < requirement) {
 
         //.... check for matching nodes
@@ -121,6 +115,7 @@ std::vector<Edge*> Graph::analyse_path_edges(const bool start, Parameters &param
 
             if (start) {//if True
                 //std::cout << vec_p[i] << std::endl; //this is sometimes a nullpointer. Think this is fixed now
+
                 node = vec_p[i]->get_tail_node();
                 start_index = 0;
                 for (auto &i: node->get_next_edges()) {potential_edges.push_back(i->get_label());}
@@ -388,7 +383,12 @@ void Graph::search_match(Node* node, std::vector<Node*> &stash, int current_inde
 
     if (current_index == params.path.size()-1) {//found an entire path, but does the ending point match?
         if (node == stash.back()) { //.back() has O(1) https://www.geeksforgeeks.org/vectorfront-vectorback-c-stl/
+
+            //#pragma omp critical // OpenMP Solution
+            //{                    //OpenMP Solution
             params.found_patterns->insert(stash);
+            //}                    //OpenMP Solution
+            //int thread_id = omp_get_thread_num();
 
             if (!params.return_nodes) *params.exit = true; //obs! make work with the current copy. pointer solution, does this worl?
                 //..........send to rank 0? but what if only one rank...
@@ -415,7 +415,10 @@ void Graph::search_match(Node* node, std::vector<Node*> &stash, int current_inde
 
 
 
+//MPI solution
 std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes) { //return_nodes=false as default
+
+//std::set<std::vector<Node*>> Graph::find_pattern(int num_ranks, std::vector<std::string> p, std::vector<std::string> q, bool return_nodes) { //return_nodes=false as default
 
     // initialize parameters
     Parameters params; //each rank will have its' own.. important! not shared memory
@@ -444,10 +447,17 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
 
 
 
-    int current_index = params.start_index; //each recursion need it's own in it's scope
-
 
     //STEP 2. Deleger startpunkter til ranks (parallellisering) --------------
+
+
+
+    //#pragma omp parallel //OpenMP Solution
+    //{
+    int current_index = params.start_index; //each recursion need it's own in it's scope (private label)
+    //int rank = omp_get_thread_num(); // OpenMP SOLUTION
+
+    //find starting points: //use formula to extract starting points
     int num_points = starting_points.size();
     int a = floor(num_points/num_ranks);
     int b = num_points%num_ranks;
@@ -460,7 +470,6 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
             rank_start_points.push_back(*it);
         }
     }
-
     else {
         int start_pos = a*(rank-b)+b*(a+1);
         for (auto it=starting_points.begin()+start_pos; it != starting_points.begin()+(start_pos+a); it++) {
@@ -468,10 +477,7 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
         }
     }
 
-    //STEP 3. Start søk ------------------
-
-    // Create instance of struct, fill in values and send as reference
-    //Parameters params; //each rank has it's own
+    //STEP 3. Start sÃ¸k ------------------
 
 
     // Find all matching patterns of path_letter (p or q)
@@ -489,6 +495,34 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
         iterate_forward(edge, stash, current_index, params);
         if (*params.exit) break;
     }
+  //} //pragma end //Open MP Solution
+
+/*
+// Open MP Solution
+    //----SHOW RESULTS: found_patterns now contain either one set of nodes or several or none at all
+    if (params.found_patterns->empty()) {// do not have any containment:
+         std::cout << "No such pattern exists in the graph." << std::endl;;
+         return *params.found_patterns;
+    }
+    else if (!return_nodes) {
+        std::cout << "The requested pattern is found!" << std::endl;
+        std::cout << "WARNING: The returned nodes might not be the only nodes connected by these paths" <<"\n"<<
+                    "Set parameter return_nodes=true to see all connections."<<std::endl;
+        return *params.found_patterns;
+    }
+    else {
+        std::cout << "The requested pattern is found! All connections found is as follows:" <<  std::endl;
+        for (auto node_pairs: *params.found_patterns) {
+            std::cout << "Pair: " << node_pairs[0]->get_label() << " - " << node_pairs[1]->get_label() << std::endl;
+         }
+        return *params.found_patterns;
+    }*/
+
+
+//}/*
+
+
+
 
 
 
@@ -562,7 +596,7 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
             }
         }
 
-
+//MPI Solution ----------------------
 
     //----SHOW RESULTS: found_patterns now contain either one set of nodes or several or none at all
     if (all_pairs.empty()) {// do not have any containment:
@@ -582,8 +616,11 @@ std::set<std::vector<Node*>> Graph::find_pattern(int rank, int num_ranks, std::v
     return all_pairs;
 }
 
+
      std::set<std::vector<Node*>> empty_vec;
     return empty_vec; //empty for all ranks but 0. Return for consistency
+
+
 
 }
 

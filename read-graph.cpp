@@ -5,7 +5,11 @@
 
 #include "graph.h"
 #include "path.h"
+ // MPI Solution
 #include <mpi.h>
+
+//#include <omp.h>
+
 
 int main(int argc, char** argv)
 {
@@ -24,6 +28,7 @@ int main(int argc, char** argv)
 
 
 	   assert(argc >= 2);  //Why is this 3, it throws an error, don't know why
+
 
 	   //std::ifstream indata(argv[1]);
 
@@ -138,4 +143,5 @@ int main(int argc, char** argv)
          }*/
 
 	   return 0;
+
 }
