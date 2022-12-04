@@ -29,7 +29,7 @@ using namespace graph;
 
 		Edge* new_edge = new Edge(edge_label, head_node, tail_node);
 		tail_node->append_next_edges(new_edge);
-		head_node->append_prev_edges(new_edge); // Would this be correct?
+		head_node->append_prev_edges(new_edge);
 
 		if (this->edges.find(edge_label) == this->edges.end()) // Checks whether the label is in the map
 		{
@@ -100,7 +100,7 @@ using namespace graph;
 		 */
 		for (auto i = orig.nodes.begin(); i != orig.nodes.end(); i++)
 		{
-			this->create_node(i->first); //Do I need this
+			this->create_node(i->first);
 		}
 
 
@@ -110,7 +110,7 @@ using namespace graph;
 	Graph& Graph::operator=(const Graph& rhs)
 	{
 
-		// This I basically just took from undir-inclist-graph.cpp
+		// Code from undir-inclist-graph.cpp from INF205 course, provided my Martin Thomas Horsch
 		 // debug output
 		   std::clog << "\tlog output: calling Graph copy assignment operator\n\t\t(this == " << this << ")\n";
 

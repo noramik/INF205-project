@@ -29,17 +29,18 @@ int main(int argc, char** argv)
        num_threads = std::atoi(argv[2]);
        omp_set_num_threads(num_threads);
 
-	   std::cout << "RUNNING ALGORITHM" <<std::endl;
-	   const std::vector<std::string> p{"r0", "r2", "r4", "r6"};
-	   const std::vector<std::string> q{"r1", "r2", "r4", "r6"};
 
-       int num_tests = 1;
+	   std::cout << "RUNNING ALGORITHM" <<std::endl;
+       int num_tests = 1000;
+
+       const std::vector<std::string> p{"r1", "r2", "r5"};
+       const std::vector<std::string> q{"r0", "r4", "r6"};
+
 
 	   auto t0 = std::chrono::high_resolution_clock::now();
 
 	   for (int i=0; i<num_tests; i++) {
-            std::set<std::vector<const graph::Node*>> k = g.find_pattern(num_threads, p, q, true);
-            std::cout << "IN LOOP" << std::endl;
+            std::set<std::vector<const graph::Node*>> k = g.find_pattern(num_threads, p, q, false);
 	   }
 
         auto t1 = std::chrono::high_resolution_clock::now();

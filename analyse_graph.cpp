@@ -27,7 +27,7 @@ std::vector<const Edge*> Graph::_analyse_path_edges(const bool start, Parameters
 
     std::vector<const Edge*> start_points; // vector to be returned
 
-    int requirement = floor (this->get_num_edges()/3); // This can be changed as wanted
+    int requirement = floor (this->get_num_edges()/15); // This can be changed as wanted
 
     // choose the labels corresponding to whether we investigate the start or ending nodes
     const std::string p_label = (start) ? params.p[0] : params.p.back();
@@ -73,7 +73,6 @@ std::vector<const Edge*> Graph::_analyse_path_edges(const bool start, Parameters
     }
 
     else if (counted_instances.at(q_label) < requirement) {
-        // REMOVE: DUPLICATE
         // search for p_label in "next_edges" to node connected to edges with q_label
 
         params.path_letter = 'q';
@@ -103,12 +102,14 @@ std::vector<const Edge*> Graph::_analyse_path_edges(const bool start, Parameters
 
         // update parameters
         params.start_index = start_index;
-        if (start_points.empty()) {*params.exit = true;}
+
+        if (start_points.empty()) *params.exit = true;
+
         return start_points;
-        // REMOVE: DUPLICATE END
     }
 
     else {// requirements not fulfilled. Return empty vector without updating parameters.
+
         return start_points;
     }
 };
@@ -172,7 +173,6 @@ std::vector<const Edge*> Graph::_analyse_graph(Parameters &params) {
         // If label occurs in both p and q, the longest sequence will be chosen
         if (num_instances == 1) {
 
-            //REMOVE duplicated later
             char path_letter; // the sequence containing the label
             int start_index; // indexposition in the path "path_letter" for the label
 
@@ -221,7 +221,6 @@ std::vector<const Edge*> Graph::_analyse_graph(Parameters &params) {
     const int q_m = counted_instances[params.q.back()];
 
     if (params.p[0] != params.q[0] && params.p.back() != params.q.back()) { // if neither start nor ending edges are equal
-
         const int minima = std::min({p_0, p_n, q_0, q_m}); // prioritize fewer instances for the coming search
 
         if (minima == p_0 || minima == q_0) start_points = _analyse_path_edges(true, params, counted_instances);
@@ -231,6 +230,7 @@ std::vector<const Edge*> Graph::_analyse_graph(Parameters &params) {
     }
     else if (params.p[0] != params.q[0]) {
         start_points = _analyse_path_edges(true, params, counted_instances);
+
         if (!start_points.empty()) return start_points;
         if (*params.exit) return start_points;
     }
@@ -254,7 +254,6 @@ std::vector<const Edge*> Graph::_analyse_graph(Parameters &params) {
 
     start_points = this->get_edges().at(minima.first); // add all starting points with the found label
 
-    //REMOVE duplicate from step 1.1
     // Find the longest sequence that holds the chosen label, and update parameters
     char path_letter; // will hold the chosen path letter ('p' or 'q')
     int start_index;      // will hold the index of the label in the chosen sequence

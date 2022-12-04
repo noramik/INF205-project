@@ -69,10 +69,10 @@ struct Graph::Parameters{
  * @param[in] start_edge, the initial edge this main-iteration started from. Is used to navigate to the right edge when moving
                 from _iterate_forward to _iterate_backward.
                 This is unique for each rank, and cannot be saved in the shared structure "params".
- * @param[in] found_patterns, local vector (for each rank) for storing all found patterns.
+ * @param[in] found_patterns_local, local vector (for each rank) for storing all found patterns.
 */
 void Graph::_iterate_forward(const Edge* &edge, std::vector<const Node*> stash, int current_index, const Parameters &params, const Edge* &start_edge,
-                             std::set<std::vector<const Node*>> &found_patterns) {
+                             std::set<std::vector<const Node*>> &found_patterns_local) {
     if (current_index == params.path.size()-1) { //the end of the sequence is reached
         stash.push_back(edge->get_head_node());  //save the end node
 
@@ -82,13 +82,13 @@ void Graph::_iterate_forward(const Edge* &edge, std::vector<const Node*> stash, 
             copy_params.switch_parameters(); // switch from p to q or opposite
 
             //Search for p or q matching start and end position of our current found sequence.
-            _search_match(stash[0], stash, current_index, copy_params, found_patterns);
+            _search_match(stash[0], stash, current_index, copy_params, found_patterns_local);
         }
 
         else { // at end of path, but the entire sequence is not yet found
                // start iterating backwards from our initial starting point, to search for the rest of the sequence
             int current_index = params.start_index;
-            _iterate_backward(start_edge, stash, current_index, params, found_patterns);
+            _iterate_backward(start_edge, stash, current_index, params, found_patterns_local);
         }
         if (*params.exit) return;            // handle exit strategy. See structure Parameters for more
     }
@@ -98,7 +98,7 @@ void Graph::_iterate_forward(const Edge* &edge, std::vector<const Node*> stash, 
         for (const Edge* next_edge: edge->get_head_node()->get_next_edges()) {
 
             if (next_edge->get_label() == params.path[current_index]) {    // match found
-                _iterate_forward(next_edge, stash, current_index, params, start_edge, found_patterns); // keep recursing forward
+                _iterate_forward(next_edge, stash, current_index, params, start_edge, found_patterns_local); // keep recursing forward
                 if (*params.exit) return;    // handle exit strategy. See structure Parameters for more
             }
         }
@@ -125,10 +125,10 @@ void Graph::_iterate_forward(const Edge* &edge, std::vector<const Node*> stash, 
  * @param[in] current_index. The current index in the sequence which are searched for.
                 Each stack has its' own copy and current_index is only decreased after moving to the next stack (level of recursion) for consistency.
  * @param[in] params, structure storing common information relevant for each recursion
- * @param[in] found_patterns, local vector (for each rank) for storing all found patterns.
+ * @param[in] found_patterns_local, local vector (for each rank) for storing all found patterns.
 */
 void Graph::_iterate_backward(const Edge* &edge, std::vector<const Node*> stash, int current_index, const Parameters &params,
-                              std::set<std::vector<const Node*>> &found_patterns) {
+                              std::set<std::vector<const Node*>> &found_patterns_local) {
     if (current_index == 0) {                               // reached the beginning
         stash.insert(stash.begin(), edge->get_tail_node()); //store the beginning node as the first element in stash
 
@@ -137,7 +137,7 @@ void Graph::_iterate_backward(const Edge* &edge, std::vector<const Node*> stash,
          copy_params.switch_parameters(); // switch from p to q or opposite
          current_index = -1;              // Will be increased by _search_match
          //Search for p or q matching start and end position of our current found sequence.
-         _search_match(stash[0], stash, current_index, copy_params, found_patterns);
+         _search_match(stash[0], stash, current_index, copy_params, found_patterns_local);
          if (*params.exit) return;        // handle exit strategy. See structure Parameters for more
     }
 
@@ -146,7 +146,7 @@ void Graph::_iterate_backward(const Edge* &edge, std::vector<const Node*> stash,
 
         for (const Edge* edge: edge->get_tail_node()->get_prev_edges()) {
             if (edge->get_label() == params.path[current_index]) {     // match found
-                _iterate_backward(edge, stash, current_index, params, found_patterns); // keep recursing backward
+                _iterate_backward(edge, stash, current_index, params, found_patterns_local); // keep recursing backward
                 if (*params.exit) return; // handle exit strategy. See structure Parameters for more
             }
         }
@@ -159,23 +159,23 @@ void Graph::_iterate_backward(const Edge* &edge, std::vector<const Node*> stash,
  * Search for sequence p or q matching start and end node of already found match q or p respectively.
  * Iterate forward in the graph starting from the first node in the already found path recursively, looking for matches on edge labels.
  * If entire sequence is found and the end node is a match, the pair of nodes (stored in "stash") is stored in the vector
-    "found_patterns" common for all instances of structure Parameters.
+    "found_patterns_local".
  *
- * @param[out] update "found_patterns" with pair of nodes if matches are found.
+ * @param[out] update "found_patterns_local" with pair of nodes if matches are found.
  * @param[in] node pointer. The current node from which its' next edges are going to be investigated for matches.
  * @param[in] stash, vector of one pair of node pointers, representing what the currently investigated sequence has to match.
  * @param[in] current_index. The current index in the sequence which are searched for.
                 Each stack has its' own copy and current_index is only increased after moving to the next stack (level of recursion) for consistency.
  * @param[in] params, structure storing common information relevant for each recursion.
- * @param[in] found_patterns, local vector (for each rank) for storing all found patterns.
+ * @param[in] found_patterns_local, local vector (for each rank) for storing all found patterns.
 */
 void Graph::_search_match(const Node* node, const std::vector<const Node*> &stash, int current_index, Parameters &params,
-                          std::set<std::vector<const Node*>> &found_patterns) {
+                          std::set<std::vector<const Node*>> &found_patterns_local) {
 
     if (current_index == params.path.size()-1) {// entire sequence found
         if (node == stash.back()) { // the sequence's ending location matches that of the other sequence. A match is found!
 
-            found_patterns.insert(stash);
+            found_patterns_local.insert(stash);
             if (!params.return_nodes) *params.exit = true; // handle exit strategy. See structure Parameters for more
         }
         return;
@@ -186,7 +186,7 @@ void Graph::_search_match(const Node* node, const std::vector<const Node*> &stas
 
         for (const Edge* edge: node->get_next_edges()) {
             if (edge->get_label() == params.path[current_index]) {// match found
-                _search_match(edge->get_head_node(), stash, current_index, params, found_patterns); // keep recursing forward
+                _search_match(edge->get_head_node(), stash, current_index, params, found_patterns_local); // keep recursing forward
                 if (*params.exit) return; // handle exit strategy. See structure Parameters for more
             }
         }
@@ -221,6 +221,12 @@ std::set<std::vector<const Node*>> Graph::find_pattern (const int num_ranks, con
     params.p = p;
     params.q = q;
 
+    // Create "global" variables common for all instances of the structure Parameters
+    std::set<std::vector<const Node*>> found_patterns; // will collect all found patterns
+    bool exit = false; // by default
+    params.found_patterns = &found_patterns;
+    params.exit = &exit;
+
     const auto starting_points = _analyse_graph(params); // fetch the edges the traversals will start at by performing an analysis of the graph
 
     // The analysis might return an empty vector, indicating that no such pattern as requested can be found in the graph.
@@ -230,11 +236,6 @@ std::set<std::vector<const Node*>> Graph::find_pattern (const int num_ranks, con
         return *params.found_patterns;
     }
 
-    // Create "global" variables common for all instances of the structure Parameters
-    std::set<std::vector<const Node*>> found_patterns; // will collect all found patterns
-    bool exit = false; // by default
-    params.found_patterns = &found_patterns;
-    params.exit = &exit;
 
     // STEP 2: Start traversing the graph in search for matches using parallelization
     // -------
@@ -243,7 +244,7 @@ std::set<std::vector<const Node*>> Graph::find_pattern (const int num_ranks, con
     #pragma omp parallel
     {
     int current_index = params.start_index;
-    std::set<std::vector<const Node*>> found_patterns;
+    std::set<std::vector<const Node*>> found_patterns_local;
 
     // Parallelize the starting_points
     // nowait removes the default barrier at the end of the for loop
@@ -257,7 +258,7 @@ std::set<std::vector<const Node*>> Graph::find_pattern (const int num_ranks, con
             if (params.start_index == 0) stash.push_back(start_edge->get_tail_node());// if we start at the beginning
 
             // recursive function to iterate trough graph until patterns are found or not found
-            _iterate_forward(start_edge, stash, current_index, params, start_edge, found_patterns);
+            _iterate_forward(start_edge, stash, current_index, params, start_edge, found_patterns_local);
         }
     }
 
@@ -265,7 +266,7 @@ std::set<std::vector<const Node*>> Graph::find_pattern (const int num_ranks, con
     // omp critical used to avoid race condition
     #pragma omp critical
     {
-        for (const auto pairs : found_patterns) {
+        for (const auto pairs : found_patterns_local) {
             params.found_patterns->insert(pairs);
         }
     }
@@ -275,7 +276,7 @@ std::set<std::vector<const Node*>> Graph::find_pattern (const int num_ranks, con
     // STEP 3: Print and return results
     // -------
     if (params.found_patterns->empty()) {// do not have any containment:
-         std::cout << "No such pattern exists in the graph." << "MORE" << std::endl;
+         std::cout << "No such pattern exists in the graph." << std::endl;
          return *params.found_patterns;
     }
     else if (!return_nodes) {
@@ -286,12 +287,9 @@ std::set<std::vector<const Node*>> Graph::find_pattern (const int num_ranks, con
     }
     else {
         std::cout << "The requested pattern is found! All connections found is as follows:" <<  std::endl;
-        int counter = 0; //REMOVE
         for (const auto &node_pairs: *params.found_patterns) {
             std::cout << "Pair: " << node_pairs[0]->get_label() << " - " << node_pairs[1]->get_label() << std::endl;
-            counter++; //REMOVE
          }
-        std::cout << "Number of found patterns is " << counter << std::endl;
         return *params.found_patterns;
     }
 }
