@@ -11,7 +11,7 @@ using namespace graph;
 	{
 		if (this->nodes.find(node_label) == this->nodes.end()) //Checks whether the node already exists in the nodes map, if it doesn't it creates it.
 		{
-			Node* new_node = new Node(node_label); // This need to be on the heap because we want the actual new_node to be returned, not a copy of it
+			Node* new_node = new Node(node_label);
 			this->nodes.insert({node_label, new_node}); // Inserting the node* into the nodes map, with node_label as the key.
 			return new_node;
 		}
@@ -110,7 +110,7 @@ using namespace graph;
 	Graph& Graph::operator=(const Graph& rhs)
 	{
 
-		// Code from undir-inclist-graph.cpp from INF205 course, provided my Martin Thomas Horsch
+		// Code from undir-inclist-graph.cpp from INF205 course, provided by Martin Thomas Horsch
 		 // debug output
 		   std::clog << "\tlog output: calling Graph copy assignment operator\n\t\t(this == " << this << ")\n";
 
@@ -152,7 +152,7 @@ using namespace graph;
 
 	}
 
-	// Implementation from lecture code - directed-graph (Martin Horsch).
+	// Implementation from lecture code - undir-inclist-graph.cpp (Martin Horsch).
 	// create a single edge based on information from the stream
 	// if it fails, return false, otherwise return true
 	bool Graph::generate_graph_from(std::istream* source)

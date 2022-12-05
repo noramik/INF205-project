@@ -10,13 +10,15 @@
 namespace graph
 {
 /*
- * Our path class is based on query struct from lecture code - directed graph (Martin Horsch).
+ * Our path class is based on the files query.cpp and query.h in directed-graph example.
+ * This comes from lectures in INF205 and were provided to us by Martin Thomas Horsch.
+ *
  */
 class Path
 {
 public:
-bool read_path(std::string* token, std::istream* source); // Based on query example from directed graph (lecture code)
-void in(std::istream* source); // Based on query example from directed graph(lecture code)
+bool read_path(std::string* token, std::istream* source);
+void in(std::istream* source);
 std::vector<std::string> return_path_labels() const {return this->path_labels;} // returns the path_labels vector
 
 

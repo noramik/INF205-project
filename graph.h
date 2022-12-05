@@ -14,6 +14,9 @@
  * Memory managment rules:
  * The graph object owns its nodes and edges.
  * The edge and node objects don't delete each other, they just have non-owning pointers to each other.
+ *
+ * The graph data structure is based on code from lectures in INF205, more specifically
+ * directed-graph and incidence-list-graph examples, both by Martin Thomas Horsch.
  */
 
 namespace graph
@@ -59,33 +62,32 @@ namespace graph
 
 
 	std::string get_label() const {return this->label;} // Returns the label of the edge
-    Node* get_head_node() const {return this->head_node;} // Returns the node the edge is leading from.
-	Node* get_tail_node() const {return this->tail_node;}// Returns the node the edge is leading to.
+    Node* get_head_node() const {return this->head_node;} // Returns the node the edge is leading to.
+	Node* get_tail_node() const {return this->tail_node;}// Returns the node the edge is leading from.
 	void set_head_node(Node* new_node) {this->head_node = new_node;} // Sets head node
 	void set_tail_node(Node* new_node) {this->tail_node = new_node;} // Sets tail node
 
 
 	private:
 	std::string label = "";
-	Node* head_node = nullptr;
-	Node* tail_node = nullptr;
+	Node* head_node = nullptr; // Node the edge is leading to, could also be called target
+	Node* tail_node = nullptr; // Node the edge is leading from, could also be called source
 	};
 
 	class Graph
 	{
 	public:
 	Graph() {}; // Constructor
-	// Creates new node, if a node with label already exists, it returns that node.
+	// Creates new node, if a node with label already exists, it returns a pointer to that node.
     Node* create_node(std::string in_label);
-
 	void create_edge(std::string in_label, std::string tail_node_name, std::string head_node_name); // Creates new edge.
 	std::map<std::string, Node*> get_nodes() const {return this->nodes;} // Returns the node map.
 	std::unordered_map<std::string, std::vector<const Edge*>> get_edges() const {return this->edges;} // Returns the edges map
 
-	// in method copied from directed-graph example from lecture.
+	// in method taken from lecture code, directed-graph (Martin Horsch).
     // read from *source
     void in(std::istream* source) {
-       while(this->generate_graph_from(source)) {} };// read edge by edge, until generate_edge_from returns false
+       while(this->generate_graph_from(source)) {} };// read edge by edge, until generate_graph_from returns false
     void out(std::ostream* target){print_graph(target);} // Writes to *target
     void print_graph(std::ostream* target); // Prints the graph.
     int get_num_edges() const {return this->num_edges;} // Returns total number of edges in the graph
@@ -104,7 +106,7 @@ namespace graph
 	// Map for nodes, label as key, Node pointer as value.
 	std::map<std::string, Node*> nodes = std::map<std::string, Node*>();
 	int num_edges = 0; // Total number of edges in the graph
-	bool generate_graph_from(std::istream* source); // Implementation of this comes in graph.cpp comes from directed-graph example (Martin Horsch)
+	bool generate_graph_from(std::istream* source); // Implementation of this in graph.cpp comes from lecture code, incidence-list-graph (Martin Horsch)
 
 
     // Private functions only relevant for function "find_pattern"
