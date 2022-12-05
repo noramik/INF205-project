@@ -9,10 +9,10 @@ using namespace graph;
 
 
 /*
- * Implementation of these methods taken from query.cpp in the directed graph example(Martin Horsch)
+ * Implementation of these methods taken from query.cpp in the directed-graph example by Martin Thomas Horsch
  */
 
-// Code from query.cpp from directed graph (Martin Horsch)
+// Code from query.cpp from directed-graph (Martin Horsch)
 bool Path::read_path(std::string* token, std::istream* source)
 {
 	char single_symbol = '\0';
@@ -32,7 +32,7 @@ bool Path::read_path(std::string* token, std::istream* source)
 
 }
 
-// Code from query.cpp from directed graph(lecture code) (Martin Horsch)
+// Code from query.cpp from directed-graph(lecture code) (Martin Horsch)
 void Path::in(std::istream* source) {
 	std::string edge_lbl;
 	while (read_path(&edge_lbl, source))
